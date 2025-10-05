@@ -172,6 +172,40 @@
         .reset-btn:hover {
             background: rgba(255, 107, 107, 0.7);
         }
+
+        .joke-section {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .joke-display {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            min-height: 100px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            line-height: 1.6;
+        }
+
+        .joke-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .clear-btn {
+            background: rgba(255, 193, 7, 0.5);
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 193, 7, 0.7);
+        }
     </style>
 </head>
 <body>
@@ -278,6 +312,16 @@
                 <button class="counter-btn reset-btn" onclick="resetCounter()">Reset</button>
             </div>
         </div>
+
+        <div class="joke-section">
+            <div class="joke-display" id="jokeDisplay">
+                Click the button below for a joke!
+            </div>
+            <div class="joke-buttons">
+                <button class="counter-btn" onclick="showJoke()">Tell Me a Joke</button>
+                <button class="counter-btn clear-btn" onclick="clearJoke()">Clear</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -291,6 +335,32 @@
         function resetCounter() {
             clickCount = 0;
             document.getElementById('clickCount').textContent = clickCount;
+        }
+
+        const jokes = [
+            "Why don't programmers like nature? It has too many bugs.",
+            "Why did the gamer cross the road? To render the other side!",
+            "What's a pirate's favorite programming language? R!",
+            "Why did Mario stop playing? He ran out of lives!",
+            "How do you comfort a JavaScript bug? You console it.",
+            "Why was the PlayStation feeling cold? Because it left its Windows open!",
+            "What do you call a belt made of watches? A waist of time!",
+            "Why don't skeletons play video games? They don't have the guts!",
+            "What did the gamer say after winning? GG EZ!",
+            "Why did the scarecrow win an award? Because he was outstanding in his field!",
+            "What do you call a fake noodle? An impasta!",
+            "Why did the Xbox go to therapy? It had too many issues!",
+            "How does Link communicate? With Zelda phone!",
+            "Why are ghosts bad at lying? Because you can see right through them!"
+        ];
+
+        function showJoke() {
+            const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+            document.getElementById('jokeDisplay').textContent = randomJoke;
+        }
+
+        function clearJoke() {
+            document.getElementById('jokeDisplay').textContent = "Click the button below for a joke!";
         }
     </script>
 </body>
