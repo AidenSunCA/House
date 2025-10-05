@@ -115,6 +115,63 @@
             font-size: 0.8em;
             margin-left: 10px;
         }
+
+        .click-counter {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .counter-display {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .counter-number {
+            font-size: 3em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .counter-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .counter-btn {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .counter-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .counter-btn:active {
+            transform: scale(0.95);
+        }
+
+        .reset-btn {
+            background: rgba(255, 107, 107, 0.5);
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 107, 107, 0.7);
+        }
     </style>
 </head>
 <body>
@@ -210,6 +267,31 @@
                 </ul>
             </div>
         </div>
+
+        <div class="click-counter">
+            <div class="counter-display">
+                <span>Clicks:</span>
+                <span class="counter-number" id="clickCount">0</span>
+            </div>
+            <div class="counter-buttons">
+                <button class="counter-btn" onclick="incrementCounter()">Click Me!</button>
+                <button class="counter-btn reset-btn" onclick="resetCounter()">Reset</button>
+            </div>
+        </div>
     </div>
+
+    <script>
+        let clickCount = 0;
+
+        function incrementCounter() {
+            clickCount++;
+            document.getElementById('clickCount').textContent = clickCount;
+        }
+
+        function resetCounter() {
+            clickCount = 0;
+            document.getElementById('clickCount').textContent = clickCount;
+        }
+    </script>
 </body>
 </html>
