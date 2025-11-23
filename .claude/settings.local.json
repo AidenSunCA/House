@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start bruh-io-game.html)",
+      "Bash(mkdir:*)",
+      "Bash(start .superdesign/design_iterations/ide_space_shooter_1.html)",
+      "Bash(start:*)",
+      "Bash(start .superdesign/design_iterations/ide_maze_chase_3.html)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd portfolio page and game collection with interactive features\n\n- Add professional portfolio page (portfolio.html) with profile, skills, and games showcase\n- Add Dice Fortune game with currency system, upgrades, and realistic rolling physics\n- Add Flappy Bird game with goofy ah mode and enhanced visuals\n- Add profile picture (MyPicture.jpg) to home and portfolio pages\n- Simplify home page to minimal welcome screen with portfolio link\n- Add multiple game files (battle games, fishing, snake, tower defense, etc.)\n- Add CSS tutorial files (inline, internal, external CSS examples)\n- Update all pages with consistent purple gradient and glass-morphism design\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enabledMcpjsonServers": [
+    "ct-devmcp",
+    "context7",
+    "vexmcp"
+  ]
+}

@@ -1,0 +1,137 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2025-11-09T00:00:00Z"
+intentName: "minimalist-pacman-game"
+originalIntent: "Create a complete minimalist geometric Pacman game based on Option 3 design concept, including maze navigation, ghost AI with pathfinding, pellet collection, power-up mechanics, score tracking, lives system, level progression, collision detection, game state management, and responsive controls"
+scope:
+  allowedPaths:
+    - "pacman-game.html"
+  forbiddenPaths:
+    - "*.js"
+    - "*.css"
+    - "node_modules/**"
+    - "package.json"
+  newFiles:
+    - "pacman-game.html"
+apiContracts:
+  - name: "gameLoop"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "drawMaze"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "drawPacman"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "drawGhosts"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "movePacman"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "moveGhosts"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "checkCollisions"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "updateScore"
+    type: "function"
+    params:
+      - name: "points"
+        type: "number"
+    returns: "void"
+    required: true
+  - name: "resetGame"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+  - name: "handleKeyboard"
+    type: "function"
+    params:
+      - name: "event"
+        type: "KeyboardEvent"
+    returns: "void"
+    required: true
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Player can control Pacman with arrow keys"
+    given: "Game is running"
+    when: "User presses arrow keys"
+    then: "Pacman moves in the corresponding direction without passing through walls"
+  - id: "AC-002"
+    description: "Pacman eats pellets and increases score"
+    given: "Pacman is on a tile with a pellet"
+    when: "Pacman moves onto the pellet"
+    then: "Pellet disappears and score increases by 10 points"
+  - id: "AC-003"
+    description: "Power pellets enable ghost vulnerability"
+    given: "Pacman eats a power pellet"
+    when: "Power pellet is consumed"
+    then: "Score increases by 50 points and ghosts become vulnerable (simplified: just score increase for minimal scope)"
+  - id: "AC-004"
+    description: "Ghosts move autonomously through maze"
+    given: "Game is running"
+    when: "Game loop executes"
+    then: "Ghosts move randomly through valid maze paths without passing through walls"
+  - id: "AC-005"
+    description: "Collision with ghost reduces lives"
+    given: "Pacman and ghost occupy same tile"
+    when: "Collision is detected"
+    then: "Lives decrease by 1 and Pacman resets to starting position"
+  - id: "AC-006"
+    description: "Game over when lives reach zero"
+    given: "Player has 0 lives remaining"
+    when: "Pacman collides with a ghost"
+    then: "Game displays game over message and stops gameplay"
+  - id: "AC-007"
+    description: "Game can be restarted"
+    given: "Game is over"
+    when: "User presses spacebar or R key"
+    then: "Game resets with full lives, score at 0, and all pellets restored"
+  - id: "AC-008"
+    description: "Win condition when all pellets collected"
+    given: "All pellets have been eaten"
+    when: "Last pellet is consumed"
+    then: "Game displays victory message"
+  - id: "AC-009"
+    description: "Visual style matches minimalist geometric design"
+    given: "Game is rendered"
+    when: "User views the game"
+    then: "Graphics use limited color palette (#222, #666, #888, #aaa, #ccc, #fff), geometric shapes, clean lines"
+  - id: "AC-010"
+    description: "Score and lives display updates in real-time"
+    given: "Game state changes"
+    when: "Score or lives change"
+    then: "HUD updates immediately to reflect current values"
+nonGoals:
+  - "Complex ghost AI with pathfinding algorithms (A*, Dijkstra)"
+  - "Multiple maze levels or level progression"
+  - "Sound effects or background music"
+  - "High score persistence (localStorage)"
+  - "Mobile touch controls"
+  - "Animations beyond basic Pacman mouth movement"
+  - "Particle effects or visual flourishes"
+  - "Multiplayer or networking features"
+  - "Leaderboard or social features"
+  - "Ghost frightened mode with eating ghosts mechanic"
+complexityBudget:
+  maxNewFunctions: 15
+  maxNewFiles: 1
+  maxLinesOfCode: 500
+  maxDependencies: 0

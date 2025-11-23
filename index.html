@@ -3,365 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aiden's Video Game Collection</title>
+    <title>Aiden - Home</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 0;
             min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
-        header {
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
             text-align: center;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 50px 40px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: block;
+            border: 4px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            object-fit: cover;
         }
 
         h1 {
             color: white;
-            font-size: 3em;
-            margin: 0;
+            font-size: 2.5em;
+            margin-bottom: 15px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .subtitle {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
             font-size: 1.2em;
-            margin-top: 10px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
             margin-bottom: 40px;
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            color: white;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            display: block;
-        }
-
-        .platforms {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .platform-card {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            color: white;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s ease;
-        }
-
-        .platform-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .platform-name {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #ffd700;
-        }
-
-        .game-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .game-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .game-list li:last-child {
-            border-bottom: none;
-        }
-
-        .favorite-badge {
-            background: #ff6b6b;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.8em;
-            margin-left: 10px;
-        }
-
-        .click-counter {
-            text-align: center;
-            margin-top: 40px;
-        }
-
-        .counter-display {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            color: white;
-            display: inline-block;
-            margin-bottom: 20px;
-        }
-
-        .counter-number {
-            font-size: 3em;
-            font-weight: bold;
-            display: block;
-        }
-
-        .counter-buttons {
+        .links {
             display: flex;
+            flex-direction: column;
             gap: 15px;
-            justify-content: center;
         }
 
-        .counter-btn {
-            background: rgba(255, 255, 255, 0.3);
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
-            border: none;
             color: white;
             padding: 15px 30px;
-            font-size: 1.2em;
             border-radius: 10px;
-            cursor: pointer;
+            text-decoration: none;
             transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.1em;
             font-weight: bold;
         }
 
-        .counter-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(1.05);
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .counter-btn:active {
-            transform: scale(0.95);
+        .btn.primary {
+            background: rgba(255, 215, 0, 0.4);
+            border-color: #ffd700;
         }
 
-        .reset-btn {
-            background: rgba(255, 107, 107, 0.5);
+        .btn.primary:hover {
+            background: rgba(255, 215, 0, 0.6);
         }
 
-        .reset-btn:hover {
-            background: rgba(255, 107, 107, 0.7);
-        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
 
-        .joke-section {
-            text-align: center;
-            margin-top: 40px;
-        }
-
-        .joke-display {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            color: white;
-            min-height: 100px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3em;
-            line-height: 1.6;
-        }
-
-        .joke-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-
-        .clear-btn {
-            background: rgba(255, 193, 7, 0.5);
-        }
-
-        .clear-btn:hover {
-            background: rgba(255, 193, 7, 0.7);
+            .card {
+                padding: 40px 30px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🎮 Aiden's Video Game Collection</h1>
-            <p class="subtitle">Welcome to my gaming universe!</p>
-        </header>
+        <div class="card">
+            <img src="MyPicture.jpg" alt="Aiden's Profile Picture" class="profile-image">
+            <h1>Welcome</h1>
+            <p class="subtitle">I'm Aiden</p>
 
-        <div class="stats">
-            <div class="stat-card">
-                <span class="stat-number">127</span>
-                <span>Total Games</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number">8</span>
-                <span>Platforms</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number">23</span>
-                <span>Favorites</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number">450+</span>
-                <span>Hours Played</span>
-            </div>
-        </div>
-
-        <div class="platforms">
-            <div class="platform-card">
-                <div class="platform-name">PlayStation 5</div>
-                <ul class="game-list">
-                    <li>Spider-Man: Miles Morales <span class="favorite-badge">★</span></li>
-                    <li>Demon's Souls</li>
-                    <li>Ratchet & Clank: Rift Apart <span class="favorite-badge">★</span></li>
-                    <li>God of War Ragnarök <span class="favorite-badge">★</span></li>
-                    <li>Horizon Forbidden West</li>
-                </ul>
-            </div>
-
-            <div class="platform-card">
-                <div class="platform-name">Nintendo Switch</div>
-                <ul class="game-list">
-                    <li>The Legend of Zelda: Breath of the Wild <span class="favorite-badge">★</span></li>
-                    <li>Super Mario Odyssey <span class="favorite-badge">★</span></li>
-                    <li>Animal Crossing: New Horizons</li>
-                    <li>Mario Kart 8 Deluxe</li>
-                    <li>Splatoon 3</li>
-                </ul>
-            </div>
-
-            <div class="platform-card">
-                <div class="platform-name">PC (Steam)</div>
-                <ul class="game-list">
-                    <li>Cyberpunk 2077 <span class="favorite-badge">★</span></li>
-                    <li>The Witcher 3: Wild Hunt <span class="favorite-badge">★</span></li>
-                    <li>Elden Ring <span class="favorite-badge">★</span></li>
-                    <li>Counter-Strike 2</li>
-                    <li>Baldur's Gate 3 <span class="favorite-badge">★</span></li>
-                </ul>
-            </div>
-
-            <div class="platform-card">
-                <div class="platform-name">Xbox Series X</div>
-                <ul class="game-list">
-                    <li>Halo Infinite <span class="favorite-badge">★</span></li>
-                    <li>Forza Horizon 5 <span class="favorite-badge">★</span></li>
-                    <li>Microsoft Flight Simulator</li>
-                    <li>Gears 5</li>
-                    <li>Sea of Thieves</li>
-                </ul>
-            </div>
-
-            <div class="platform-card">
-                <div class="platform-name">Retro Collection</div>
-                <ul class="game-list">
-                    <li>Super Mario Bros. 3 (NES) <span class="favorite-badge">★</span></li>
-                    <li>The Legend of Zelda: A Link to the Past (SNES)</li>
-                    <li>Super Metroid (SNES) <span class="favorite-badge">★</span></li>
-                    <li>Pokémon Red (Game Boy)</li>
-                    <li>Sonic the Hedgehog (Genesis)</li>
-                </ul>
-            </div>
-
-            <div class="platform-card">
-                <div class="platform-name">Mobile Games</div>
-                <ul class="game-list">
-                    <li>Pokémon GO</li>
-                    <li>Among Us</li>
-                    <li>Clash Royale</li>
-                    <li>Genshin Impact <span class="favorite-badge">★</span></li>
-                    <li>Monument Valley</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="click-counter">
-            <div class="counter-display">
-                <span>Clicks:</span>
-                <span class="counter-number" id="clickCount">0</span>
-            </div>
-            <div class="counter-buttons">
-                <button class="counter-btn" onclick="incrementCounter()">Click Me!</button>
-                <button class="counter-btn reset-btn" onclick="resetCounter()">Reset</button>
-            </div>
-        </div>
-
-        <div class="joke-section">
-            <div class="joke-display" id="jokeDisplay">
-                Click the button below for a joke!
-            </div>
-            <div class="joke-buttons">
-                <button class="counter-btn" onclick="showJoke()">Tell Me a Joke</button>
-                <button class="counter-btn clear-btn" onclick="clearJoke()">Clear</button>
+            <div class="links">
+                <a href="portfolio.html" class="btn primary">👨‍💻 View Portfolio</a>
             </div>
         </div>
     </div>
-
-    <script>
-        let clickCount = 0;
-
-        function incrementCounter() {
-            clickCount++;
-            document.getElementById('clickCount').textContent = clickCount;
-        }
-
-        function resetCounter() {
-            clickCount = 0;
-            document.getElementById('clickCount').textContent = clickCount;
-        }
-
-        const jokes = [
-            "Why don't programmers like nature? It has too many bugs.",
-            "Why did the gamer cross the road? To render the other side!",
-            "What's a pirate's favorite programming language? R!",
-            "Why did Mario stop playing? He ran out of lives!",
-            "How do you comfort a JavaScript bug? You console it.",
-            "Why was the PlayStation feeling cold? Because it left its Windows open!",
-            "What do you call a belt made of watches? A waist of time!",
-            "Why don't skeletons play video games? They don't have the guts!",
-            "What did the gamer say after winning? GG EZ!",
-            "Why did the scarecrow win an award? Because he was outstanding in his field!",
-            "What do you call a fake noodle? An impasta!",
-            "Why did the Xbox go to therapy? It had too many issues!",
-            "How does Link communicate? With Zelda phone!",
-            "Why are ghosts bad at lying? Because you can see right through them!"
-        ];
-
-        function showJoke() {
-            const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
-            document.getElementById('jokeDisplay').textContent = randomJoke;
-        }
-
-        function clearJoke() {
-            document.getElementById('jokeDisplay').textContent = "Click the button below for a joke!";
-        }
-    </script>
 </body>
 </html>

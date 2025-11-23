@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fishing Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #000000 60%, #000000 100%);
+            font-family: Arial, sans-serif;
+            text-align: center;
+            height: 100vh;
+        }
+        #gameContainer {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #stats {
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        #fishingArea {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: rgba(70, 130, 180, 0.3);
+            border: 3px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .fish {
+            position: absolute;
+            font-size: 40px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            animation: swim 3s linear infinite;
+        }
+        .fish:hover {
+            transform: scale(1.2);
+        }
+        @keyframes swim {
+            0% { left: -60px; }
+            100% { left: 100%; }
+        }
+        #castButton {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #castButton:hover {
+            background: #45a049;
+        }
+        #castButton:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .splash {
+            position: absolute;
+            font-size: 30px;
+            animation: splash 1s ease-out;
+            pointer-events: none;
+        }
+        @keyframes splash {
+            0% { opacity: 1; transform: scale(0.5); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+        .caught {
+            color: green;
+            font-weight: bold;
+            animation: catchAnim 0.5s;
+        }
+        @keyframes catchAnim {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🎣 Fishing Game 🎣</h1>
+
+        <div id="stats">
+            <span>Fish Caught: <span id="fishCount">0</span></span> |
+            <span>Score: <span id="score">0</span></span> |
+            <span>Time: <span id="timer">60</span>s</span>
+        </div>
+
+        <button id="castButton" onclick="startFishing()">Cast Your Line!</button>
+
+        <div id="fishingArea"></div>
+
+        <div style="margin-top: 20px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;">
+            <strong>How to Play:</strong> Click "Cast Your Line!" to start. Click on the fish as they swim by to catch them! Different fish are worth different points. You have 60 seconds!
+        </div>
+    </div>
+
+    <script>
+        let fishCount = 0;
+        let score = 0;
+        let timeLeft = 60;
+        let gameActive = false;
+        let fishSpawnInterval;
+        let timerInterval;
+
+        const fishTypes = [
+            { emoji: '🐟', points: 10, speed: 3, rarity: 0.4 },
+            { emoji: '🐠', points: 20, speed: 2.5, rarity: 0.3 },
+            { emoji: '🐡', points: 30, speed: 2, rarity: 0.2 },
+            { emoji: '🦈', points: 50, speed: 4, rarity: 0.07 },
+            { emoji: '🐙', points: 40, speed: 3.5, rarity: 0.03 }
+        ];
+
+        function startFishing() {
+            if (gameActive) return;
+
+            gameActive = true;
+            fishCount = 0;
+            score = 0;
+            timeLeft = 60;
+            updateStats();
+
+            document.getElementById('castButton').disabled = true;
+            document.getElementById('castButton').textContent = 'Fishing...';
+
+            // Spawn fish
+            fishSpawnInterval = setInterval(spawnFish, 1500);
+
+            // Start timer
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function spawnFish() {
+            if (!gameActive) return;
+
+            const fishingArea = document.getElementById('fishingArea');
+            const fishType = getRandomFish();
+
+            const fish = document.createElement('div');
+            fish.className = 'fish';
+            fish.textContent = fishType.emoji;
+            fish.style.top = Math.random() * 350 + 'px';
+            fish.style.animationDuration = fishType.speed + 's';
+
+            fish.onclick = function() {
+                catchFish(fish, fishType);
+            };
+
+            fishingArea.appendChild(fish);
+
+            // Remove fish after animation
+            setTimeout(() => {
+                if (fish.parentNode) {
+                    fish.remove();
+                }
+            }, fishType.speed * 1000);
+        }
+
+        function getRandomFish() {
+            const rand = Math.random();
+            let cumulative = 0;
+
+            for (let fishType of fishTypes) {
+                cumulative += fishType.rarity;
+                if (rand < cumulative) {
+                    return fishType;
+                }
+            }
+            return fishTypes[0];
+        }
+
+        function catchFish(fishElement, fishType) {
+            fishCount++;
+            score += fishType.points;
+            updateStats();
+
+            // Create splash effect
+            const splash = document.createElement('div');
+            splash.className = 'splash';
+            splash.textContent = '💦';
+            splash.style.left = fishElement.style.left;
+            splash.style.top = fishElement.style.top;
+            document.getElementById('fishingArea').appendChild(splash);
+
+            setTimeout(() => splash.remove(), 1000);
+
+            // Show points
+            const points = document.createElement('div');
+            points.className = 'splash caught';
+            points.textContent = '+' + fishType.points;
+            points.style.left = fishElement.offsetLeft + 'px';
+            points.style.top = fishElement.offsetTop + 'px';
+            document.getElementById('fishingArea').appendChild(points);
+
+            setTimeout(() => points.remove(), 500);
+
+            // Remove fish
+            fishElement.remove();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById('timer').textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('fishCount').textContent = fishCount;
+            document.getElementById('score').textContent = score;
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(fishSpawnInterval);
+            clearInterval(timerInterval);
+
+            // Remove all fish
+            const fishingArea = document.getElementById('fishingArea');
+            fishingArea.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                            background: white; padding: 30px; border-radius: 10px; font-size: 24px;">
+                    <h2>🎉 Game Over! 🎉</h2>
+                    <p>Fish Caught: ${fishCount}</p>
+                    <p>Final Score: ${score}</p>
+                </div>
+            `;
+
+            document.getElementById('castButton').disabled = false;
+            document.getElementById('castButton').textContent = 'Play Again!';
+        }
+    </script>
+</body>
+</html>

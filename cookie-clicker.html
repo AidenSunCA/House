@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5a623 0%, #e67e22 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .stats-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .cookie-count {
+            font-size: 3em;
+            font-weight: bold;
+            color: #8b4513;
+            margin-bottom: 10px;
+        }
+
+        .cookies-per-second {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            color: #8b4513;
+            font-weight: bold;
+        }
+
+        .cookie-container {
+            position: relative;
+            margin: 30px 0;
+        }
+
+        #cookieButton {
+            width: 300px;
+            height: 300px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 10px 30px rgba(139, 69, 19, 0.3));
+        }
+
+        #cookieButton:hover {
+            transform: scale(1.05);
+        }
+
+        #cookieButton:active {
+            transform: scale(0.95);
+        }
+
+        .cookie-svg {
+            width: 100%;
+            height: 100%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        .click-effect {
+            position: fixed;
+            font-size: 2em;
+            font-weight: bold;
+            color: #8b4513;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+
+        .right-panel {
+            width: 450px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .buy-amount-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(139, 69, 19, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .buy-amount-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #f5a623;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #8b4513;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .buy-amount-btn:hover {
+            background: #fef5e7;
+            transform: translateY(-2px);
+        }
+
+        .buy-amount-btn.active {
+            background: linear-gradient(135deg, #f5a623, #e67e22);
+            color: white;
+            border-color: #d35400;
+        }
+
+        .panel-section {
+            margin-bottom: 30px;
+        }
+
+        .panel-section h2 {
+            color: #8b4513;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 3px solid #f5a623;
+            padding-bottom: 10px;
+        }
+
+        .upgrade-item {
+            background: linear-gradient(135deg, #fff 0%, #fef5e7 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #f5a623;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upgrade-item:hover:not(.disabled) {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(245, 166, 35, 0.3);
+            border-color: #e67e22;
+        }
+
+        .upgrade-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #ccc;
+        }
+
+        .upgrade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #8b4513;
+        }
+
+        .upgrade-level {
+            background: #f5a623;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .upgrade-desc {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .upgrade-cost {
+            font-weight: bold;
+            color: #e67e22;
+            font-size: 1.1em;
+        }
+
+        .upgrade-production {
+            color: #27ae60;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .rebirth-section {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            margin-top: 30px;
+        }
+
+        .rebirth-section h2 {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .rebirth-points {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        #rebirthBtn {
+            width: 100%;
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+            margin-bottom: 15px;
+        }
+
+        #rebirthBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
+        }
+
+        #rebirthBtn:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .rebirth-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .powerup-item {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .powerup-item:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(5px);
+        }
+
+        .powerup-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .powerup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .powerup-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .powerup-cost {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(139, 69, 19, 0.95);
+            color: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            font-size: 3em;
+            font-weight: bold;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: notificationPop 1.5s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes notificationPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            .right-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="stats-box">
+                <div class="cookie-count" id="cookieCount">0</div>
+                <div>cookies</div>
+                <div class="cookies-per-second">
+                    per second: <span id="cps">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Clicks:</span>
+                    <span class="stat-value" id="totalClicks">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Cookies per Click:</span>
+                    <span class="stat-value" id="cookiesPerClick">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Earned:</span>
+                    <span class="stat-value" id="totalEarned">0</span>
+                </div>
+            </div>
+
+            <div class="cookie-container">
+                <button id="cookieButton" aria-label="Click the cookie">
+                    <svg class="cookie-svg" viewBox="0 0 200 200">
+                        <defs>
+                            <radialGradient id="cookieGradient">
+                                <stop offset="0%" style="stop-color:#f4a460;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#d2691e;stop-opacity:1" />
+                            </radialGradient>
+                        </defs>
+                        <circle cx="100" cy="100" r="90" fill="url(#cookieGradient)" stroke="#8b4513" stroke-width="3"/>
+                        <!-- Chocolate chips -->
+                        <circle cx="70" cy="70" r="8" fill="#3e2723"/>
+                        <circle cx="130" cy="80" r="10" fill="#3e2723"/>
+                        <circle cx="90" cy="120" r="7" fill="#3e2723"/>
+                        <circle cx="140" cy="130" r="9" fill="#3e2723"/>
+                        <circle cx="110" cy="90" r="6" fill="#3e2723"/>
+                        <circle cx="75" cy="140" r="8" fill="#3e2723"/>
+                        <circle cx="125" cy="115" r="7" fill="#3e2723"/>
+                        <circle cx="60" cy="110" r="6" fill="#3e2723"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="panel-section">
+                <h2>Shop</h2>
+
+                <div class="buy-amount-selector">
+                    <button class="buy-amount-btn active" onclick="setBuyAmount(1)">Buy 1</button>
+                    <button class="buy-amount-btn" onclick="setBuyAmount(10)">Buy 10</button>
+                    <button class="buy-amount-btn" onclick="setBuyAmount(100)">Buy 100</button>
+                    <button class="buy-amount-btn" onclick="setBuyAmount('max')">Buy Max</button>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-cursor" onclick="buyUpgrade('cursor')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">👆 Cursor</span>
+                        <span class="upgrade-level" id="cursor-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Auto-click the cookie</div>
+                    <div class="upgrade-production" id="cursor-production">+1 cookie/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="cursor-cost">15</span> cookies</div>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-grandma" onclick="buyUpgrade('grandma')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">👵 Grandma</span>
+                        <span class="upgrade-level" id="grandma-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Bakes cookies for you</div>
+                    <div class="upgrade-production" id="grandma-production">+5 cookies/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="grandma-cost">100</span> cookies</div>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-farm" onclick="buyUpgrade('farm')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">🌾 Farm</span>
+                        <span class="upgrade-level" id="farm-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Grows cookie ingredients</div>
+                    <div class="upgrade-production" id="farm-production">+25 cookies/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="farm-cost">500</span> cookies</div>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-factory" onclick="buyUpgrade('factory')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">🏭 Factory</span>
+                        <span class="upgrade-level" id="factory-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Mass produces cookies</div>
+                    <div class="upgrade-production" id="factory-production">+100 cookies/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="factory-cost">3000</span> cookies</div>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-mine" onclick="buyUpgrade('mine')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">⛏️ Mine</span>
+                        <span class="upgrade-level" id="mine-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Mines cookie dough</div>
+                    <div class="upgrade-production" id="mine-production">+500 cookies/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="mine-cost">10000</span> cookies</div>
+                </div>
+
+                <div class="upgrade-item" id="upgrade-bank" onclick="buyUpgrade('bank')">
+                    <div class="upgrade-header">
+                        <span class="upgrade-name">🏦 Bank</span>
+                        <span class="upgrade-level" id="bank-level">0</span>
+                    </div>
+                    <div class="upgrade-desc">Generates cookie interest</div>
+                    <div class="upgrade-production" id="bank-production">+2000 cookies/sec each</div>
+                    <div class="upgrade-cost">Cost: <span id="bank-cost">50000</span> cookies</div>
+                </div>
+            </div>
+
+            <div class="rebirth-section">
+                <h2>🔄 Rebirth</h2>
+                <div class="rebirth-points">
+                    Rebirth Points: <span id="rebirthPoints">0</span>
+                </div>
+                <button id="rebirthBtn" onclick="doRebirth()">
+                    REBIRTH (Need 1M cookies)
+                </button>
+                <div class="rebirth-info">
+                    Reset all progress and gain 1 Rebirth Point per million cookies.
+                    Rebirth Points provide permanent bonuses!
+                </div>
+
+                <h3 style="margin-top: 20px; margin-bottom: 15px;">Power-Ups</h3>
+
+                <div class="buy-amount-selector">
+                    <button class="buy-amount-btn active" onclick="setRebirthBuyAmount(1)">Buy 1</button>
+                    <button class="buy-amount-btn" onclick="setRebirthBuyAmount(10)">Buy 10</button>
+                    <button class="buy-amount-btn" onclick="setRebirthBuyAmount(100)">Buy 100</button>
+                    <button class="buy-amount-btn" onclick="setRebirthBuyAmount('max')">Buy Max</button>
+                </div>
+
+                <div class="powerup-item" id="powerup-clickpower" onclick="buyPowerup('clickpower')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">💪 Click Power (<span id="clickpower-level">0</span>)</span>
+                        <span class="powerup-cost" id="clickpower-cost">1 RP</span>
+                    </div>
+                    <div id="clickpower-desc">+100% cookies per click</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-production" onclick="buyPowerup('production')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">⚡ Production Boost (<span id="production-level">0</span>)</span>
+                        <span class="powerup-cost" id="production-cost">1 RP</span>
+                    </div>
+                    <div id="production-desc">+50% production from all buildings</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-discount" onclick="buyPowerup('discount')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">💰 Discount (<span id="discount-level">0</span>)</span>
+                        <span class="powerup-cost" id="discount-cost">1 RP</span>
+                    </div>
+                    <div id="discount-desc">-10% cost for all upgrades</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-starter" onclick="buyPowerup('starter')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">🚀 Starter Pack (<span id="starter-level">0</span>)</span>
+                        <span class="powerup-cost" id="starter-cost">1 RP</span>
+                    </div>
+                    <div id="starter-desc">Start with 10,000 cookies after rebirth</div>
+                </div>
+            </div>
+
+            <div class="rebirth-section" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); margin-top: 30px;">
+                <h2>⚡ MEGA REBIRTH</h2>
+                <div class="rebirth-points">
+                    Mega Rebirth Points: <span id="megaRebirthPoints">0</span>
+                </div>
+                <button id="megaRebirthBtn" onclick="doMegaRebirth()" style="background: linear-gradient(145deg, #8e44ad, #9b59b6);">
+                    MEGA REBIRTH (Need 100 RP)
+                </button>
+                <div class="rebirth-info">
+                    Reset all Rebirth Points and gain 1 Mega Rebirth Point per 100 RP.
+                    Mega Rebirth Points provide ULTIMATE bonuses!
+                </div>
+
+                <h3 style="margin-top: 20px; margin-bottom: 15px;">⭐ Mega Power-Ups</h3>
+
+                <div class="powerup-item" id="powerup-superclick" onclick="buyMegaPowerup('superclick')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">💥 Super Click (<span id="superclick-level">0</span>)</span>
+                        <span class="powerup-cost" id="superclick-cost">1 MRP</span>
+                    </div>
+                    <div id="superclick-desc">10x cookies per click</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-megaproduction" onclick="buyMegaPowerup('megaproduction')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">🚀 Mega Production (<span id="megaproduction-level">0</span>)</span>
+                        <span class="powerup-cost" id="megaproduction-cost">1 MRP</span>
+                    </div>
+                    <div id="megaproduction-desc">5x production from all buildings</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-ultradiscount" onclick="buyMegaPowerup('ultradiscount')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">💎 Ultra Discount (<span id="ultradiscount-level">0</span>)</span>
+                        <span class="powerup-cost" id="ultradiscount-cost">1 MRP</span>
+                    </div>
+                    <div id="ultradiscount-desc">-50% cost for all upgrades</div>
+                </div>
+
+                <div class="powerup-item" id="powerup-godmode" onclick="buyMegaPowerup('godmode')">
+                    <div class="powerup-header">
+                        <span class="powerup-name">👑 God Mode (<span id="godmode-level">0</span>)</span>
+                        <span class="powerup-cost" id="godmode-cost">1 MRP</span>
+                    </div>
+                    <div id="godmode-desc">Start with 1M cookies + 100 RP after mega rebirth</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let cookies = 0;
+        let totalClicks = 0;
+        let totalEarned = 0;
+        let cookiesPerClick = 1;
+        let cookiesPerSecond = 0;
+        let buyAmount = 1;
+        let rebirthBuyAmount = 1;
+
+        // Rebirth
+        let rebirthPoints = 0;
+        let megaRebirthPoints = 0;
+
+        // Power-ups
+        let powerups = {
+            clickpower: 0,
+            production: 0,
+            discount: 0,
+            starter: 0
+        };
+
+        // Mega Power-ups
+        let megaPowerups = {
+            superclick: 0,
+            megaproduction: 0,
+            ultradiscount: 0,
+            godmode: 0
+        };
+
+        // Upgrades
+        let upgrades = {
+            cursor: { level: 0, baseCost: 15, baseProduction: 1 },
+            grandma: { level: 0, baseCost: 100, baseProduction: 5 },
+            farm: { level: 0, baseCost: 500, baseProduction: 25 },
+            factory: { level: 0, baseCost: 3000, baseProduction: 100 },
+            mine: { level: 0, baseCost: 10000, baseProduction: 500 },
+            bank: { level: 0, baseCost: 50000, baseProduction: 2000 }
+        };
+
+        // Cookie click handler
+        document.getElementById('cookieButton').addEventListener('click', (e) => {
+            const gain = calculateClickValue();
+            cookies += gain;
+            totalClicks++;
+            totalEarned += gain;
+
+            // Floating text effect
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.textContent = `+${formatNumber(gain)}`;
+            effect.style.left = e.clientX + 'px';
+            effect.style.top = e.clientY + 'px';
+            document.body.appendChild(effect);
+
+            setTimeout(() => effect.remove(), 1000);
+
+            updateDisplay();
+            saveGame();
+        });
+
+        function calculateClickValue() {
+            let value = cookiesPerClick;
+            // Apply click power powerup - exponential scaling
+            // Formula: 2^level (doubles each time)
+            if (powerups.clickpower > 0) {
+                value *= Math.pow(2, powerups.clickpower);
+            }
+            // Apply MEGA super click powerup - 10x per level
+            if (megaPowerups.superclick > 0) {
+                value *= Math.pow(10, megaPowerups.superclick);
+            }
+            return Math.floor(value);
+        }
+
+        function calculateProduction(baseProduction) {
+            let production = baseProduction;
+            // Apply production boost powerup - exponential scaling
+            // Formula: 1.5^level
+            if (powerups.production > 0) {
+                production *= Math.pow(1.5, powerups.production);
+            }
+            // Apply MEGA production powerup - 5x per level
+            if (megaPowerups.megaproduction > 0) {
+                production *= Math.pow(5, megaPowerups.megaproduction);
+            }
+            return production;
+        }
+
+        function calculateCost(baseCost, level) {
+            let cost = baseCost * Math.pow(1.15, level);
+            // Apply discount powerup - exponential scaling
+            // Formula: 0.85^level (15% discount per level, stacking)
+            if (powerups.discount > 0) {
+                cost *= Math.pow(0.85, powerups.discount);
+            }
+            // Apply MEGA ultra discount powerup - 50% per level
+            if (megaPowerups.ultradiscount > 0) {
+                cost *= Math.pow(0.5, megaPowerups.ultradiscount);
+            }
+            return Math.floor(cost);
+        }
+
+        function getPowerupCost(type) {
+            const currentLevel = powerups[type];
+            // Cost increases: 1, 2, 4, 8, 16... (doubles each time)
+            return Math.pow(2, currentLevel);
+        }
+
+        function setBuyAmount(amount) {
+            buyAmount = amount;
+
+            // Update button states in shop section
+            const shopButtons = document.querySelector('.panel-section .buy-amount-selector').querySelectorAll('.buy-amount-btn');
+            shopButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            updateDisplay();
+        }
+
+        function setRebirthBuyAmount(amount) {
+            rebirthBuyAmount = amount;
+
+            // Update button states in rebirth section
+            const rebirthButtons = document.querySelector('.rebirth-section .buy-amount-selector').querySelectorAll('.buy-amount-btn');
+            rebirthButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            updateDisplay();
+        }
+
+        function calculateBulkCost(baseCost, currentLevel, amount) {
+            let totalCost = 0;
+            for (let i = 0; i < amount; i++) {
+                totalCost += calculateCost(baseCost, currentLevel + i);
+            }
+            return totalCost;
+        }
+
+        function getMaxAffordable(baseCost, currentLevel) {
+            let count = 0;
+            let totalCost = 0;
+
+            while (true) {
+                const nextCost = calculateCost(baseCost, currentLevel + count);
+                if (totalCost + nextCost > cookies) break;
+                totalCost += nextCost;
+                count++;
+                if (count > 10000) break; // Safety limit
+            }
+
+            return count;
+        }
+
+        function buyUpgrade(type) {
+            const upgrade = upgrades[type];
+
+            let amountToBuy = buyAmount;
+
+            // Calculate how many we can actually buy
+            if (buyAmount === 'max') {
+                amountToBuy = getMaxAffordable(upgrade.baseCost, upgrade.level);
+            } else {
+                amountToBuy = Math.min(buyAmount, getMaxAffordable(upgrade.baseCost, upgrade.level));
+            }
+
+            if (amountToBuy <= 0) return;
+
+            const cost = calculateBulkCost(upgrade.baseCost, upgrade.level, amountToBuy);
+
+            if (cookies >= cost) {
+                cookies -= cost;
+                upgrade.level += amountToBuy;
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        function buyPowerup(type) {
+            let amountToBuy = rebirthBuyAmount;
+            let totalCost = 0;
+
+            // Calculate max affordable with increasing costs
+            if (rebirthBuyAmount === 'max') {
+                amountToBuy = 0;
+                let tempCost = 0;
+                while (tempCost + getPowerupCost(type) <= rebirthPoints && amountToBuy < 100) {
+                    tempCost += Math.pow(2, powerups[type] + amountToBuy);
+                    amountToBuy++;
+                }
+                totalCost = tempCost;
+            } else {
+                // Calculate total cost for buying multiple
+                let requestedAmount = Math.min(rebirthBuyAmount, 100);
+                for (let i = 0; i < requestedAmount; i++) {
+                    const cost = Math.pow(2, powerups[type] + i);
+                    if (totalCost + cost > rebirthPoints) break;
+                    totalCost += cost;
+                    amountToBuy = i + 1;
+                }
+            }
+
+            if (amountToBuy <= 0) return;
+
+            rebirthPoints -= totalCost;
+            powerups[type] += amountToBuy;
+            updateDisplay();
+            saveGame();
+        }
+
+        function doRebirth() {
+            const rebirthThreshold = 1000000;
+            if (cookies >= rebirthThreshold) {
+                const pointsGained = Math.floor(cookies / rebirthThreshold);
+
+                if (confirm(`Rebirth and gain ${pointsGained} Rebirth Point(s)?\n\nThis will reset all cookies and upgrades!`)) {
+                    rebirthPoints += pointsGained;
+
+                    // Reset progress
+                    cookies = powerups.starter > 0 ? 10000 * powerups.starter : 0;
+                    totalClicks = 0;
+                    totalEarned = 0;
+                    cookiesPerClick = 1;
+
+                    // Reset all upgrades
+                    for (let key in upgrades) {
+                        upgrades[key].level = 0;
+                    }
+
+                    // Show notification
+                    showNotification('REBIRTH!');
+
+                    updateDisplay();
+                    saveGame();
+                }
+            }
+        }
+
+        function buyMegaPowerup(type) {
+            const cost = Math.pow(2, megaPowerups[type]);
+
+            if (megaRebirthPoints >= cost) {
+                megaRebirthPoints -= cost;
+                megaPowerups[type]++;
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        function doMegaRebirth() {
+            const megaThreshold = 100;
+            if (rebirthPoints >= megaThreshold) {
+                const pointsGained = Math.floor(rebirthPoints / megaThreshold);
+
+                if (confirm(`MEGA REBIRTH and gain ${pointsGained} Mega Rebirth Point(s)?\n\nThis will reset ALL cookies, upgrades, AND Rebirth Points!`)) {
+                    megaRebirthPoints += pointsGained;
+
+                    // Reset ALL progress including rebirth points
+                    const startCookies = megaPowerups.godmode > 0 ? 1000000 * megaPowerups.godmode : 0;
+                    const startRP = megaPowerups.godmode > 0 ? 100 * megaPowerups.godmode : 0;
+
+                    cookies = startCookies;
+                    rebirthPoints = startRP;
+                    totalClicks = 0;
+                    totalEarned = 0;
+                    cookiesPerClick = 1;
+
+                    // Reset all upgrades
+                    for (let key in upgrades) {
+                        upgrades[key].level = 0;
+                    }
+
+                    // Reset all powerups
+                    for (let key in powerups) {
+                        powerups[key] = 0;
+                    }
+
+                    // Show notification
+                    showNotification('⚡ MEGA REBIRTH! ⚡');
+
+                    updateDisplay();
+                    saveGame();
+                }
+            }
+        }
+
+        function showNotification(text) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 1500);
+        }
+
+        function updateDisplay() {
+            // Calculate cookies per second
+            cookiesPerSecond = 0;
+            for (let key in upgrades) {
+                const upgrade = upgrades[key];
+                const production = calculateProduction(upgrade.baseProduction);
+                cookiesPerSecond += upgrade.level * production;
+            }
+
+            // Update main stats
+            document.getElementById('cookieCount').textContent = formatNumber(Math.floor(cookies));
+            document.getElementById('cps').textContent = formatNumber(cookiesPerSecond);
+            document.getElementById('totalClicks').textContent = formatNumber(totalClicks);
+            document.getElementById('cookiesPerClick').textContent = formatNumber(calculateClickValue());
+            document.getElementById('totalEarned').textContent = formatNumber(Math.floor(totalEarned));
+            document.getElementById('rebirthPoints').textContent = rebirthPoints;
+
+            // Update upgrades
+            for (let key in upgrades) {
+                const upgrade = upgrades[key];
+
+                // Calculate cost based on buy amount
+                let displayAmount = buyAmount;
+                if (buyAmount === 'max') {
+                    displayAmount = getMaxAffordable(upgrade.baseCost, upgrade.level);
+                } else {
+                    displayAmount = Math.min(buyAmount, getMaxAffordable(upgrade.baseCost, upgrade.level));
+                }
+
+                const cost = displayAmount > 0 ? calculateBulkCost(upgrade.baseCost, upgrade.level, displayAmount) : calculateCost(upgrade.baseCost, upgrade.level);
+                const production = calculateProduction(upgrade.baseProduction);
+
+                document.getElementById(`${key}-level`).textContent = upgrade.level;
+
+                // Show cost with amount if buying multiple
+                if (buyAmount === 1) {
+                    document.getElementById(`${key}-cost`).textContent = formatNumber(cost);
+                } else {
+                    document.getElementById(`${key}-cost`).textContent = `${formatNumber(cost)} (x${displayAmount})`;
+                }
+
+                document.getElementById(`${key}-production`).textContent = `+${formatNumber(production)} cookies/sec each`;
+
+                const element = document.getElementById(`upgrade-${key}`);
+                if (cookies >= cost && displayAmount > 0) {
+                    element.classList.remove('disabled');
+                } else {
+                    element.classList.add('disabled');
+                }
+            }
+
+            // Update powerups
+            for (let key in powerups) {
+                document.getElementById(`${key}-level`).textContent = powerups[key];
+
+                // Calculate cost and display amount
+                let displayRebirthAmount = 0;
+                let totalCost = 0;
+
+                if (rebirthBuyAmount === 'max') {
+                    let tempCost = 0;
+                    while (tempCost + Math.pow(2, powerups[key] + displayRebirthAmount) <= rebirthPoints && displayRebirthAmount < 100) {
+                        tempCost += Math.pow(2, powerups[key] + displayRebirthAmount);
+                        displayRebirthAmount++;
+                    }
+                    totalCost = tempCost;
+                } else {
+                    let requestedAmount = Math.min(rebirthBuyAmount, 100);
+                    for (let i = 0; i < requestedAmount; i++) {
+                        const cost = Math.pow(2, powerups[key] + i);
+                        if (totalCost + cost > rebirthPoints) break;
+                        totalCost += cost;
+                        displayRebirthAmount++;
+                    }
+                }
+
+                // Update cost display
+                const costElement = document.getElementById(`${key}-cost`);
+                if (displayRebirthAmount > 1) {
+                    costElement.textContent = `${totalCost} RP (x${displayRebirthAmount})`;
+                } else if (displayRebirthAmount === 1) {
+                    costElement.textContent = `${getPowerupCost(key)} RP`;
+                } else {
+                    costElement.textContent = `${getPowerupCost(key)} RP`;
+                }
+
+                // Update description with current bonus
+                const descElement = document.getElementById(`${key}-desc`);
+                if (key === 'clickpower') {
+                    const multiplier = Math.pow(2, powerups[key]);
+                    descElement.textContent = `${multiplier}x cookies per click`;
+                } else if (key === 'production') {
+                    const multiplier = Math.pow(1.5, powerups[key]);
+                    descElement.textContent = `${multiplier.toFixed(2)}x production from all buildings`;
+                } else if (key === 'discount') {
+                    const discount = (1 - Math.pow(0.85, powerups[key])) * 100;
+                    descElement.textContent = `-${discount.toFixed(1)}% cost for all upgrades`;
+                } else if (key === 'starter') {
+                    const amount = 10000 * powerups[key];
+                    descElement.textContent = `Start with ${formatNumber(amount)} cookies after rebirth`;
+                }
+
+                const element = document.getElementById(`powerup-${key}`);
+                if (displayRebirthAmount > 0) {
+                    element.classList.remove('disabled');
+                } else {
+                    element.classList.add('disabled');
+                }
+            }
+
+            // Update mega powerups
+            document.getElementById('megaRebirthPoints').textContent = megaRebirthPoints;
+
+            for (let key in megaPowerups) {
+                document.getElementById(`${key}-level`).textContent = megaPowerups[key];
+                const cost = Math.pow(2, megaPowerups[key]);
+                document.getElementById(`${key}-cost`).textContent = `${cost} MRP`;
+
+                // Update descriptions
+                const descElement = document.getElementById(`${key}-desc`);
+                if (key === 'superclick') {
+                    const multiplier = Math.pow(10, megaPowerups[key]);
+                    descElement.textContent = `${multiplier}x cookies per click`;
+                } else if (key === 'megaproduction') {
+                    const multiplier = Math.pow(5, megaPowerups[key]);
+                    descElement.textContent = `${multiplier}x production from all buildings`;
+                } else if (key === 'ultradiscount') {
+                    const discount = (1 - Math.pow(0.5, megaPowerups[key])) * 100;
+                    descElement.textContent = `-${discount.toFixed(1)}% cost for all upgrades`;
+                } else if (key === 'godmode') {
+                    const cookieAmount = 1000000 * megaPowerups[key];
+                    const rpAmount = 100 * megaPowerups[key];
+                    descElement.textContent = `Start with ${formatNumber(cookieAmount)} cookies + ${rpAmount} RP after mega rebirth`;
+                }
+
+                const element = document.getElementById(`powerup-${key}`);
+                if (megaRebirthPoints >= cost) {
+                    element.classList.remove('disabled');
+                } else {
+                    element.classList.add('disabled');
+                }
+            }
+
+            // Update rebirth buttons
+            document.getElementById('rebirthBtn').disabled = cookies < 1000000;
+            document.getElementById('megaRebirthBtn').disabled = rebirthPoints < 100;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toString();
+        }
+
+        // Passive income loop
+        setInterval(() => {
+            if (cookiesPerSecond > 0) {
+                const gain = cookiesPerSecond / 10;
+                cookies += gain;
+                totalEarned += gain;
+                updateDisplay();
+            }
+        }, 100);
+
+        // Auto-save every 5 seconds
+        setInterval(() => {
+            saveGame();
+        }, 5000);
+
+        function saveGame() {
+            const saveData = {
+                cookies,
+                totalClicks,
+                totalEarned,
+                cookiesPerClick,
+                rebirthPoints,
+                megaRebirthPoints,
+                powerups,
+                megaPowerups,
+                upgrades,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('cookieClickerSave', JSON.stringify(saveData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('cookieClickerSave');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    cookies = data.cookies || 0;
+                    totalClicks = data.totalClicks || 0;
+                    totalEarned = data.totalEarned || 0;
+                    cookiesPerClick = data.cookiesPerClick || 1;
+                    rebirthPoints = data.rebirthPoints || 0;
+                    megaRebirthPoints = data.megaRebirthPoints || 0;
+                    powerups = data.powerups || powerups;
+                    megaPowerups = data.megaPowerups || megaPowerups;
+                    upgrades = data.upgrades || upgrades;
+
+                    // Calculate offline earnings (up to 1 hour)
+                    if (data.timestamp) {
+                        const timeDiff = Math.min((Date.now() - data.timestamp) / 1000, 3600);
+                        if (timeDiff > 60) {
+                            let offlineCPS = 0;
+                            for (let key in upgrades) {
+                                const upgrade = upgrades[key];
+                                const production = calculateProduction(upgrade.baseProduction);
+                                offlineCPS += upgrade.level * production;
+                            }
+                            const offlineGain = Math.floor(offlineCPS * timeDiff);
+                            if (offlineGain > 0) {
+                                cookies += offlineGain;
+                                totalEarned += offlineGain;
+                                showNotification(`Welcome back! +${formatNumber(offlineGain)} cookies`);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to load save:', e);
+                }
+            }
+            updateDisplay();
+        }
+
+        // Initialize game
+        loadGame();
+    </script>
+</body>
+</html>

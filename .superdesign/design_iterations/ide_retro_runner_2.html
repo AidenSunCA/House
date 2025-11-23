@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-BIT DASH - Retro Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            background: linear-gradient(180deg, #4287f5 0%, #87ceeb 50%, #f5d442 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            text-align: center;
+            border: 8px solid #000;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 12px 12px 0 #000;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #ff0000;
+            text-shadow: 4px 4px 0 #000;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        #gameCanvas {
+            border: 4px solid #000;
+            background: #87ceeb;
+            display: block;
+            margin: 15px auto;
+            cursor: pointer;
+            image-rendering: pixelated;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            background: #ffe4b5;
+            border: 4px solid #000;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 11px;
+            text-align: left;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #ff4500;
+        }
+
+        .controls div {
+            margin: 8px 0;
+            color: #000;
+        }
+
+        #score, #highScore {
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px;
+            padding: 12px 20px;
+            border: 4px solid #000;
+            background: #ffff00;
+            color: #000;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+        }
+
+        .event-indicator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #fff;
+            border: 4px solid #000;
+            padding: 10px;
+            font-size: 10px;
+            max-width: 220px;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+        }
+
+        .event-log {
+            color: #333;
+            font-size: 9px;
+            margin: 3px 0;
+            padding: 2px;
+            background: #f0f0f0;
+        }
+
+        #startButton {
+            background: #ff4500;
+            color: #fff;
+            border: 4px solid #000;
+            padding: 15px 35px;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 6px 6px 0 #000;
+            transition: all 0.1s;
+            margin: 10px;
+        }
+
+        #startButton:hover {
+            background: #ff6347;
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        #startButton:active {
+            transform: translate(6px, 6px);
+            box-shadow: 0 0 0 #000;
+        }
+
+        .pixel-text {
+            font-size: 10px;
+            color: #000;
+            margin-top: 15px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #ff0000;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body onload="initGame()" onresize="handleResize()">
+    <div id="gameContainer">
+        <h1>8-BIT DASH</h1>
+
+        <div class="controls">
+            <h3>★ CONTROLS & EVENTS ★</h3>
+            <div><strong>ONLOAD:</strong> Game loads with retro style</div>
+            <div><strong>ONKEYDOWN:</strong> SPACE or ↑ to jump</div>
+            <div><strong>ONCLICK:</strong> Click canvas to jump</div>
+            <div><strong>ONMOUSEMOVE:</strong> Track mouse position</div>
+            <div><strong>ONRESIZE:</strong> Responsive canvas scaling</div>
+        </div>
+
+        <div>
+            <span id="score">SCORE: 0000</span>
+            <span id="highScore">HIGH: 0000</span>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="400"
+                onclick="jump()"
+                onmousemove="trackMouse(event)"></canvas>
+
+        <div class="status" id="status">Press START or click canvas to jump!</div>
+
+        <button id="startButton" onclick="startGame()">★ START GAME ★</button>
+
+        <div class="pixel-text">
+            ▓▓▓ JUMP OVER OBSTACLES • COLLECT COINS ▓▓▓<br>
+            © 2025 8-BIT STUDIOS
+        </div>
+    </div>
+
+    <div class="event-indicator">
+        <strong>EVENT MONITOR:</strong>
+        <div id="eventLog"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let highScore = 0;
+        let playerY = 300;
+        let playerVelocity = 0;
+        let isJumping = false;
+        let obstacles = [];
+        let coins = [];
+        let groundY = 350;
+        let scrollSpeed = 5;
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // EVENT 1: ONLOAD - Initialize game when page loads
+        function initGame() {
+            logEvent('ONLOAD: 8-Bit Dash initialized!');
+            drawStartScreen();
+
+            // Load high score from localStorage
+            highScore = parseInt(localStorage.getItem('dashHighScore') || '0');
+            document.getElementById('highScore').textContent = 'HIGH: ' + String(highScore).padStart(4, '0');
+        }
+
+        // EVENT 2: ONCLICK - Jump when canvas is clicked
+        function jump() {
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+
+            if (gameOver) return;
+
+            if (!isJumping) {
+                playerVelocity = -12;
+                isJumping = true;
+                logEvent('ONCLICK: Player jumped!');
+            }
+        }
+
+        // EVENT 3: ONMOUSEMOVE - Track mouse position for effects
+        function trackMouse(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = event.clientX - rect.left;
+            mouseY = event.clientY - rect.top;
+            logEvent('ONMOUSEMOVE: [' + Math.floor(mouseX) + ',' + Math.floor(mouseY) + ']');
+        }
+
+        // EVENT 4: ONKEYDOWN - Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                jump();
+                logEvent('ONKEYDOWN: ' + e.code + ' pressed');
+            }
+        });
+
+        // EVENT 5: ONRESIZE - Adjust on window resize
+        function handleResize() {
+            logEvent('ONRESIZE: Window dimensions changed');
+        }
+
+        function logEvent(message) {
+            const log = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'event-log';
+            entry.textContent = '▶ ' + message;
+            log.insertBefore(entry, log.firstChild);
+
+            while (log.children.length > 10) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            obstacles = [];
+            coins = [];
+            playerY = 300;
+            playerVelocity = 0;
+            isJumping = false;
+            scrollSpeed = 5;
+
+            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('status').textContent = 'RUNNING...';
+            logEvent('Game Started! GO GO GO!');
+
+            gameLoop();
+        }
+
+        function drawStartScreen() {
+            // Sky background
+            ctx.fillStyle = '#87ceeb';
+            ctx.fillRect(0, 0, 800, 400);
+
+            // Ground
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, 350, 800, 50);
+
+            // Grass
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 345, 800, 10);
+
+            // Title
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 48px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('8-BIT DASH', 400, 150);
+
+            // Player preview
+            drawPlayer(100, 300);
+        }
+
+        function drawPlayer(x, y) {
+            // Simple pixel character
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(x, y, 30, 30); // Body
+
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(x + 5, y + 5, 20, 20); // Face
+
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x + 8, y + 10, 5, 5);
+            ctx.fillRect(x + 17, y + 10, 5, 5);
+
+            // Legs
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(x + 5, y + 30, 8, 15);
+            ctx.fillRect(x + 17, y + 30, 8, 15);
+        }
+
+        function drawObstacle(x, y, width, height) {
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x, y, width, height);
+
+            // Texture
+            ctx.fillStyle = '#8b4513';
+            for (let i = 0; i < width; i += 10) {
+                for (let j = 0; j < height; j += 10) {
+                    ctx.fillRect(x + i, y + j, 5, 5);
+                }
+            }
+        }
+
+        function drawCoin(x, y) {
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(x - 3, y - 3, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // $ symbol
+            ctx.fillStyle = '#ff8c00';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('$', x, y + 4);
+        }
+
+        function gameLoop() {
+            if (!gameStarted || gameOver) return;
+
+            // Sky background
+            ctx.fillStyle = '#87ceeb';
+            ctx.fillRect(0, 0, 800, 400);
+
+            // Clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            ctx.arc(150 - (score % 400), 80, 30, 0, Math.PI * 2);
+            ctx.arc(600 - (score % 600), 120, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ground
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, 350, 800, 50);
+
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 345, 800, 10);
+
+            // Update player physics
+            playerVelocity += 0.6; // Gravity
+            playerY += playerVelocity;
+
+            if (playerY >= groundY - 45) {
+                playerY = groundY - 45;
+                playerVelocity = 0;
+                isJumping = false;
+            }
+
+            // Draw player
+            drawPlayer(100, playerY);
+
+            // Mouse tracking indicator
+            if (mouseX > 0) {
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 20, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Spawn obstacles
+            if (Math.random() < 0.02 && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < 500)) {
+                obstacles.push({ x: 800, y: groundY - 40, width: 40, height: 40 });
+            }
+
+            // Spawn coins
+            if (Math.random() < 0.015 && (coins.length === 0 || coins[coins.length - 1].x < 600)) {
+                coins.push({ x: 800, y: 200 + Math.random() * 100 });
+            }
+
+            // Update obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].x -= scrollSpeed;
+
+                if (obstacles[i].x < -50) {
+                    obstacles.splice(i, 1);
+                    score += 10;
+                    continue;
+                }
+
+                drawObstacle(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+
+                // Collision detection
+                if (100 + 30 > obstacles[i].x && 100 < obstacles[i].x + obstacles[i].width &&
+                    playerY + 30 > obstacles[i].y) {
+                    gameOver = true;
+                    endGame();
+                    return;
+                }
+            }
+
+            // Update coins
+            for (let i = coins.length - 1; i >= 0; i--) {
+                coins[i].x -= scrollSpeed;
+
+                if (coins[i].x < -20) {
+                    coins.splice(i, 1);
+                    continue;
+                }
+
+                drawCoin(coins[i].x, coins[i].y);
+
+                // Coin collection
+                const dist = Math.hypot(coins[i].x - 115, coins[i].y - (playerY + 15));
+                if (dist < 30) {
+                    coins.splice(i, 1);
+                    score += 50;
+                    logEvent('COIN COLLECTED! +50');
+                }
+            }
+
+            // Increase difficulty
+            scrollSpeed = 5 + score / 500;
+
+            // Update score
+            document.getElementById('score').textContent = 'SCORE: ' + String(score).padStart(4, '0');
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            document.getElementById('status').textContent = 'GAME OVER!';
+            document.getElementById('startButton').style.display = 'inline-block';
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('dashHighScore', highScore);
+                document.getElementById('highScore').textContent = 'HIGH: ' + String(highScore).padStart(4, '0');
+                document.getElementById('status').textContent = 'NEW HIGH SCORE!';
+            }
+
+            logEvent('GAME OVER! Final Score: ' + score);
+        }
+    </script>
+</body>
+</html>

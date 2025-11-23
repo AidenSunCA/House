@@ -1,0 +1,123 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2025-11-09T00:00:00Z"
+originalIntent: "Make a 2d game website that is retro style and uses 5 different webpage events [User selected Option 1: RETRO INVADERS]"
+scope:
+  allowedPaths:
+    - "retro-invaders.html"
+  forbiddenPaths:
+    - "bruh-io-game.html"
+    - ".superdesign/design_iterations/*"
+  newFiles:
+    - "retro-invaders.html"
+apiContracts:
+  - name: "initGame"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+    description: "EVENT 1 (onload): Initialize game state and canvas"
+  - name: "handleKeyDown"
+    type: "function"
+    params:
+      - name: "event"
+        type: "KeyboardEvent"
+    returns: "void"
+    required: true
+    description: "EVENT 2 (onkeydown): Move player ship with arrow keys"
+  - name: "shoot"
+    type: "function"
+    params:
+      - name: "event"
+        type: "MouseEvent"
+    returns: "void"
+    required: true
+    description: "EVENT 3 (onclick): Fire laser on canvas click"
+  - name: "updateCursor"
+    type: "function"
+    params:
+      - name: "event"
+        type: "MouseEvent"
+    returns: "void"
+    required: true
+    description: "EVENT 4 (onmousemove): Track mouse for targeting system"
+  - name: "handleResize"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+    description: "EVENT 5 (onresize): Adjust canvas on window resize"
+  - name: "spawnEnemies"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+    description: "Generate enemy grid pattern"
+  - name: "gameLoop"
+    type: "function"
+    params: []
+    returns: "void"
+    required: true
+    description: "Main game update and render loop"
+  - name: "drawEnemy"
+    type: "function"
+    params:
+      - name: "x"
+        type: "number"
+      - name: "y"
+        type: "number"
+      - name: "type"
+        type: "number"
+    returns: "void"
+    required: true
+    description: "Render pixel art enemy sprites"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Game initializes on page load"
+    given: "User opens HTML file in browser"
+    when: "Page finishes loading"
+    then: "Canvas displays with start screen and enemies visible"
+  - id: "AC-002"
+    description: "Player ship moves with arrow keys"
+    given: "Game is started"
+    when: "User presses left/right arrow keys"
+    then: "Player ship moves horizontally within canvas bounds"
+  - id: "AC-003"
+    description: "Shooting works on click"
+    given: "Game is running"
+    when: "User clicks on canvas"
+    then: "Laser bullet fires from player ship position upward"
+  - id: "AC-004"
+    description: "Targeting system tracks mouse"
+    given: "Game is running"
+    when: "User moves mouse over canvas"
+    then: "Vertical targeting line follows mouse X position"
+  - id: "AC-005"
+    description: "Canvas responds to window resize"
+    given: "Game is running"
+    when: "User resizes browser window"
+    then: "Resize event logged and canvas remains functional"
+  - id: "AC-006"
+    description: "Collision detection works"
+    given: "Bullet and enemy overlap"
+    when: "Collision detected"
+    then: "Enemy is destroyed and score increases by 100"
+  - id: "AC-007"
+    description: "Retro aesthetic applied"
+    given: "Game rendered"
+    when: "User views game"
+    then: "Green monochrome CRT style with scanline effect"
+nonGoals:
+  - "Sound effects or background music"
+  - "Multiple difficulty levels or level progression"
+  - "Power-ups or weapon upgrades"
+  - "Enemy movement patterns or AI"
+  - "High score persistence (localStorage)"
+  - "Mobile touch controls"
+  - "Multiplayer functionality"
+  - "Boss battles or special enemies"
+complexityBudget:
+  maxNewFunctions: 15
+  maxNewFiles: 1
+  maxLinesOfCode: 500
+  maxDependencies: 0

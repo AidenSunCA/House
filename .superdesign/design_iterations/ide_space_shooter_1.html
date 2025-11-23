@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRO INVADERS - Space Shooter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            text-align: center;
+            border: 4px solid #0f0;
+            padding: 20px;
+            background: #001100;
+            box-shadow: 0 0 50px #0f0;
+        }
+
+        h1 {
+            font-size: 48px;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px #0f0;
+            animation: pulse 2s infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        #gameCanvas {
+            border: 3px solid #0f0;
+            background: #000;
+            display: block;
+            margin: 20px auto;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .controls {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #0f0;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .controls div {
+            margin: 5px 0;
+        }
+
+        #score, #lives {
+            display: inline-block;
+            font-size: 24px;
+            margin: 0 20px;
+            padding: 10px 20px;
+            border: 2px solid #0f0;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .event-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #0f0;
+            padding: 10px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .event-log {
+            color: #0f0;
+            font-size: 10px;
+            margin: 2px 0;
+            opacity: 0.7;
+        }
+
+        #startButton {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px #0f0;
+            transition: all 0.3s;
+        }
+
+        #startButton:hover {
+            background: #000;
+            color: #0f0;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 40px #0f0;
+        }
+
+        .pixel-text {
+            font-size: 12px;
+            color: #0f0;
+            text-shadow: 2px 2px #003300;
+        }
+    </style>
+</head>
+<body onload="initGame()" onresize="handleResize()">
+    <div id="gameContainer">
+        <h1>▼ RETRO INVADERS ▼</h1>
+
+        <div class="controls">
+            <h3>▶ CONTROLS & EVENTS</h3>
+            <div>• <strong>ONLOAD:</strong> Game initializes automatically</div>
+            <div>• <strong>ONKEYDOWN:</strong> ← → Arrow keys to move ship</div>
+            <div>• <strong>ONCLICK:</strong> Click canvas to shoot lasers</div>
+            <div>• <strong>ONMOUSEMOVE:</strong> Aim targeting system</div>
+            <div>• <strong>ONRESIZE:</strong> Auto-adjust canvas size</div>
+        </div>
+
+        <div>
+            <span id="score">SCORE: 00000</span>
+            <span id="lives">LIVES: ♥♥♥</span>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="800"
+                onclick="shoot(event)"
+                onmousemove="updateCursor(event)"></canvas>
+
+        <button id="startButton" onclick="startGame()">▶ INSERT COIN ◀</button>
+
+        <div class="pixel-text" style="margin-top: 20px;">
+            █ DESTROY ALL ALIEN INVADERS █<br>
+            © 2025 RETRO GAMES UNLIMITED
+        </div>
+    </div>
+
+    <div class="event-indicator">
+        <strong>EVENT LOG:</strong>
+        <div id="eventLog"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameStarted = false;
+        let score = 0;
+        let lives = 3;
+        let cursorX = 300;
+        let enemies = [];
+        let bullets = [];
+        let playerX = 300;
+
+        // EVENT 1: ONLOAD - Initialize game when page loads
+        function initGame() {
+            logEvent('ONLOAD: Game initialized');
+            drawStartScreen();
+        }
+
+        // EVENT 2: ONCLICK - Shoot when canvas is clicked
+        function shoot(event) {
+            if (!gameStarted) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+
+            bullets.push({ x: playerX, y: 750, speed: 8 });
+            logEvent('ONCLICK: Laser fired at X:' + Math.floor(x));
+
+            // Draw muzzle flash
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(playerX - 2, 740, 4, 10);
+        }
+
+        // EVENT 3: ONMOUSEMOVE - Update targeting cursor
+        function updateCursor(event) {
+            if (!gameStarted) return;
+            const rect = canvas.getBoundingClientRect();
+            cursorX = event.clientX - rect.left;
+            logEvent('ONMOUSEMOVE: Target X:' + Math.floor(cursorX));
+        }
+
+        // EVENT 4: ONKEYDOWN - Handle keyboard input (attached to body)
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+
+            if (e.key === 'ArrowLeft' && playerX > 30) {
+                playerX -= 15;
+                logEvent('ONKEYDOWN: Move LEFT');
+            }
+            if (e.key === 'ArrowRight' && playerX < 570) {
+                playerX += 15;
+                logEvent('ONKEYDOWN: Move RIGHT');
+            }
+        });
+
+        // EVENT 5: ONRESIZE - Adjust canvas on window resize
+        function handleResize() {
+            logEvent('ONRESIZE: Window resized');
+            // Keep canvas responsive (in production would scale proportionally)
+        }
+
+        function logEvent(message) {
+            const log = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'event-log';
+            entry.textContent = '▶ ' + message;
+            log.insertBefore(entry, log.firstChild);
+
+            // Keep only last 8 entries
+            while (log.children.length > 8) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('startButton').style.display = 'none';
+            logEvent('Game Started!');
+            spawnEnemies();
+            gameLoop();
+        }
+
+        function spawnEnemies() {
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 8; col++) {
+                    enemies.push({
+                        x: 50 + col * 70,
+                        y: 50 + row * 60,
+                        alive: true,
+                        type: row % 3
+                    });
+                }
+            }
+        }
+
+        function drawStartScreen() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 600, 800);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = '48px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('RETRO INVADERS', 300, 300);
+
+            ctx.font = '20px Courier New';
+            ctx.fillText('Click INSERT COIN to begin', 300, 400);
+
+            // Draw sample enemies
+            drawEnemy(250, 500, 0);
+            drawEnemy(300, 500, 1);
+            drawEnemy(350, 500, 2);
+        }
+
+        function drawEnemy(x, y, type) {
+            ctx.fillStyle = '#0f0';
+            const patterns = [
+                [[1,0,0,0,1], [0,1,0,1,0], [0,1,1,1,0], [1,0,1,0,1], [0,1,0,1,0]], // Type 1
+                [[0,1,1,1,0], [1,0,1,0,1], [1,1,1,1,1], [1,0,0,0,1], [0,1,0,1,0]], // Type 2
+                [[0,0,1,0,0], [0,1,1,1,0], [1,1,1,1,1], [1,0,1,0,1], [1,0,0,0,1]]  // Type 3
+            ];
+
+            const pattern = patterns[type];
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    if (pattern[row][col]) {
+                        ctx.fillRect(x + col * 6 - 15, y + row * 6 - 15, 5, 5);
+                    }
+                }
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#0f0';
+            // Classic space ship shape
+            ctx.beginPath();
+            ctx.moveTo(playerX, 740);
+            ctx.lineTo(playerX - 20, 770);
+            ctx.lineTo(playerX + 20, 770);
+            ctx.closePath();
+            ctx.fill();
+
+            // Targeting line
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cursorX, 0);
+            ctx.lineTo(cursorX, 800);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function gameLoop() {
+            if (!gameStarted) return;
+
+            // Clear screen
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 600, 800);
+
+            // Update and draw bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].y -= bullets[i].speed;
+
+                if (bullets[i].y < 0) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(bullets[i].x - 2, bullets[i].y, 4, 15);
+
+                // Check collision with enemies
+                for (let enemy of enemies) {
+                    if (enemy.alive) {
+                        const dist = Math.hypot(bullets[i].x - enemy.x, bullets[i].y - enemy.y);
+                        if (dist < 25) {
+                            enemy.alive = false;
+                            bullets.splice(i, 1);
+                            score += 100;
+                            document.getElementById('score').textContent = 'SCORE: ' + String(score).padStart(5, '0');
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Draw enemies
+            for (let enemy of enemies) {
+                if (enemy.alive) {
+                    drawEnemy(enemy.x, enemy.y, enemy.type);
+                }
+            }
+
+            // Draw player
+            drawPlayer();
+
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>

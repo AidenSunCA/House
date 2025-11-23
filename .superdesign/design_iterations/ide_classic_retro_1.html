@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman - Classic Retro Design</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+
+        #gameContainer {
+            text-align: center;
+            background: #000;
+            padding: 20px;
+            border: 4px solid #0000ff;
+            box-shadow: 0 0 30px rgba(0, 100, 255, 0.5);
+        }
+
+        #gameTitle {
+            font-size: 48px;
+            color: #ffff00;
+            text-shadow: 3px 3px 0px #ff0000, 6px 6px 0px #00ffff;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+        }
+
+        #canvas {
+            border: 2px solid #0000ff;
+            background: #000;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #000080;
+            border: 2px solid #0000ff;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .score {
+            color: #ffff00;
+        }
+
+        #lives {
+            color: #ff0000;
+        }
+
+        #instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+
+        .pixel-text {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="gameTitle" class="pixel-text">PAC-MAN</div>
+        <canvas id="canvas" width="560" height="620"></canvas>
+        <div id="hud">
+            <div class="pixel-text">SCORE: <span class="score" id="score">0</span></div>
+            <div class="pixel-text">HIGH: <span class="score" id="highScore">0</span></div>
+            <div class="pixel-text" id="lives">LIVES: ♥♥♥</div>
+        </div>
+        <div id="instructions" class="pixel-text">
+            USE ARROW KEYS TO MOVE • EAT ALL PELLETS • AVOID GHOSTS
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game constants
+        const GRID_SIZE = 20;
+        const COLS = 28;
+        const ROWS = 31;
+
+        // Simple maze layout (1 = wall, 0 = pellet, 2 = power pellet, 3 = empty)
+        const maze = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,2,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,2,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,0,1,1,1,1,1,3,1,1,3,1,1,1,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,1,1,1,3,1,1,3,1,1,1,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,1,1,1,3,3,1,1,1,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,1,3,3,3,3,3,3,1,3,1,1,0,1,1,1,1,1,1],
+            [3,3,3,3,3,3,0,3,3,3,1,3,3,3,3,3,3,1,3,3,3,0,3,3,3,3,3,3],
+            [1,1,1,1,1,1,0,1,1,3,1,3,3,3,3,3,3,1,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,1,1,1,1,1,1,1,1,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,1,1,1,1,1,1,1,1,3,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,3,1,1,1,1,1,1,1,1,3,1,1,0,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,2,0,0,1,1,0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0,1,1,0,0,2,1],
+            [1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1],
+            [1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1],
+            [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Game state
+        let score = 0;
+        let lives = 3;
+        let pacman = { x: 14, y: 23, dir: 0, nextDir: 0, mouthAngle: 0 };
+        let ghosts = [
+            { x: 13, y: 14, color: '#ff0000', dir: 0 }, // Blinky (red)
+            { x: 14, y: 14, color: '#ffb8ff', dir: 0 }, // Pinky (pink)
+            { x: 13, y: 15, color: '#00ffff', dir: 0 }, // Inky (cyan)
+            { x: 14, y: 15, color: '#ffb852', dir: 0 }  // Clyde (orange)
+        ];
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': pacman.nextDir = 0; break;
+                case 'ArrowRight': pacman.nextDir = 1; break;
+                case 'ArrowDown': pacman.nextDir = 2; break;
+                case 'ArrowLeft': pacman.nextDir = 3; break;
+            }
+        });
+
+        function drawMaze() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const x = col * GRID_SIZE;
+                    const y = row * GRID_SIZE;
+
+                    if (maze[row][col] === 1) {
+                        // Wall
+                        ctx.fillStyle = '#0000ff';
+                        ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
+                        ctx.strokeStyle = '#4040ff';
+                        ctx.strokeRect(x, y, GRID_SIZE, GRID_SIZE);
+                    } else if (maze[row][col] === 0) {
+                        // Pellet
+                        ctx.fillStyle = '#ffb852';
+                        ctx.beginPath();
+                        ctx.arc(x + GRID_SIZE/2, y + GRID_SIZE/2, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (maze[row][col] === 2) {
+                        // Power pellet
+                        ctx.fillStyle = '#ffb852';
+                        ctx.beginPath();
+                        ctx.arc(x + GRID_SIZE/2, y + GRID_SIZE/2, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        function drawPacman() {
+            const x = pacman.x * GRID_SIZE + GRID_SIZE/2;
+            const y = pacman.y * GRID_SIZE + GRID_SIZE/2;
+
+            // Animate mouth
+            pacman.mouthAngle = (pacman.mouthAngle + 0.1) % 0.8;
+            const mouthOpen = Math.abs(Math.sin(pacman.mouthAngle * 5)) * 0.4;
+
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+
+            const rotation = pacman.dir * Math.PI / 2;
+            const startAngle = rotation + mouthOpen;
+            const endAngle = rotation + (Math.PI * 2) - mouthOpen;
+
+            ctx.arc(x, y, GRID_SIZE/2 - 2, startAngle, endAngle);
+            ctx.lineTo(x, y);
+            ctx.fill();
+        }
+
+        function drawGhosts() {
+            ghosts.forEach(ghost => {
+                const x = ghost.x * GRID_SIZE;
+                const y = ghost.y * GRID_SIZE;
+
+                // Body
+                ctx.fillStyle = ghost.color;
+                ctx.beginPath();
+                ctx.arc(x + GRID_SIZE/2, y + GRID_SIZE/2, GRID_SIZE/2 - 2, Math.PI, 0);
+                ctx.lineTo(x + GRID_SIZE - 2, y + GRID_SIZE - 2);
+                ctx.lineTo(x + GRID_SIZE - 5, y + GRID_SIZE/2 + 4);
+                ctx.lineTo(x + GRID_SIZE - 8, y + GRID_SIZE - 2);
+                ctx.lineTo(x + 8, y + GRID_SIZE - 2);
+                ctx.lineTo(x + 5, y + GRID_SIZE/2 + 4);
+                ctx.lineTo(x + 2, y + GRID_SIZE - 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(x + 5, y + 6, 4, 6);
+                ctx.fillRect(x + 11, y + 6, 4, 6);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x + 6, y + 8, 2, 3);
+                ctx.fillRect(x + 12, y + 8, 2, 3);
+            });
+        }
+
+        function movePacman() {
+            const dirX = [0, 1, 0, -1][pacman.nextDir];
+            const dirY = [-1, 0, 1, 0][pacman.nextDir];
+            const newX = pacman.x + dirX;
+            const newY = pacman.y + dirY;
+
+            if (newY >= 0 && newY < ROWS && newX >= 0 && newX < COLS && maze[newY][newX] !== 1) {
+                pacman.dir = pacman.nextDir;
+                pacman.x = newX;
+                pacman.y = newY;
+
+                // Eat pellets
+                if (maze[newY][newX] === 0 || maze[newY][newX] === 2) {
+                    score += maze[newY][newX] === 2 ? 50 : 10;
+                    maze[newY][newX] = 3;
+                    document.getElementById('score').textContent = score;
+                }
+            }
+        }
+
+        function moveGhosts() {
+            ghosts.forEach(ghost => {
+                // Simple random movement for demo
+                const possibleDirs = [];
+                const dirs = [[0,-1], [1,0], [0,1], [-1,0]];
+
+                dirs.forEach((dir, i) => {
+                    const newX = ghost.x + dir[0];
+                    const newY = ghost.y + dir[1];
+                    if (newY >= 0 && newY < ROWS && newX >= 0 && newX < COLS && maze[newY][newX] !== 1) {
+                        possibleDirs.push(i);
+                    }
+                });
+
+                if (possibleDirs.length > 0 && Math.random() < 0.1) {
+                    ghost.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
+                }
+
+                const dirX = dirs[ghost.dir][0];
+                const dirY = dirs[ghost.dir][1];
+                const newX = ghost.x + dirX;
+                const newY = ghost.y + dirY;
+
+                if (newY >= 0 && newY < ROWS && newX >= 0 && newX < COLS && maze[newY][newX] !== 1) {
+                    ghost.x = newX;
+                    ghost.y = newY;
+                }
+            });
+        }
+
+        let frameCount = 0;
+        function gameLoop() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawMaze();
+            drawPacman();
+            drawGhosts();
+
+            frameCount++;
+            if (frameCount % 8 === 0) {
+                movePacman();
+            }
+            if (frameCount % 12 === 0) {
+                moveGhosts();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

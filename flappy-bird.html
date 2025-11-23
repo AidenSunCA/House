@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(180deg, #4ec0ca 0%, #87ceeb 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            font-size: 3em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        #gameCanvas {
+            display: block;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 20;
+        }
+
+        .game-over.show {
+            display: block;
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .game-over p {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
+        .game-over button {
+            background: linear-gradient(135deg, #4ec0ca 0%, #3a9ca5 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .game-over button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 192, 202, 0.4);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            text-align: center;
+            color: #333;
+            max-width: 500px;
+        }
+
+        .instructions p {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .start-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 40px 60px;
+            border-radius: 20px;
+            border: 4px solid white;
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-screen.hide {
+            display: none;
+        }
+
+        .start-screen h2 {
+            color: #ffd700;
+            font-size: 3em;
+            margin: 0 0 20px 0;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+            letter-spacing: 3px;
+        }
+
+        .start-screen p {
+            color: white;
+            font-size: 1.3em;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .start-screen .highlight {
+            color: #4ec0ca;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .start-screen .blink {
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+
+        .cringe-mode-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            color: white;
+            border: 3px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .cringe-mode-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.8);
+        }
+
+        .cringe-mode-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <h1>Flappy Bird</h1>
+
+    <div class="game-container">
+        <div class="score-display" id="scoreDisplay">0</div>
+
+        <div class="start-screen" id="startScreen">
+            <h2>FLAPPY BIRD</h2>
+            <p>Navigate through the pipes!</p>
+            <p><span class="highlight">CLICK</span> or <span class="highlight">SPACE</span> to flap</p>
+            <p style="margin-top: 30px;" class="blink">Press to Start</p>
+            <button class="cringe-mode-btn" onclick="toggleCringeMode()">Goofy ah Mode</button>
+        </div>
+
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <div class="game-over" id="gameOver">
+            <h2>Game Over!</h2>
+            <p>Score: <span id="finalScore">0</span></p>
+            <p>Best: <span id="bestScore">0</span></p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <p><strong>How to Play:</strong></p>
+        <p>Click or press SPACE to make the bird flap</p>
+        <p>Avoid hitting the pipes and the ground</p>
+        <p>Try to get the highest score!</p>
+        <a href="portfolio.html" style="display: inline-block; margin-top: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">← Back to Portfolio</a>
+    </div>
+
+    <div id="watchToEndText" style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 15px 30px; border-radius: 10px; border: 2px solid #ff0000; font-size: 24px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); z-index: 1000; display: none;">
+        💀 WATCH TO THE END 💀
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game variables
+        let bird = {
+            x: 80,
+            y: 250,
+            width: 34,
+            height: 24,
+            velocity: 0,
+            gravity: 0.396,
+            jump: -8
+        };
+
+        let pipes = [];
+        let score = 0;
+        let bestScore = localStorage.getItem('flappyBestScore') || 0;
+        let gameStarted = false;
+        let gameOver = false;
+        let frameCount = 0;
+        let cloudOffset = 0;
+        let groundOffset = 0;
+        let cringeMode = false;
+        let cringeEffectTimer = 0;
+        let showSkullEffect = false;
+        let skullEffectDuration = 0;
+
+        // Subway Surfers mini-game variables
+        let subwayPlayer = { lane: 1, y: 0 }; // lane 0, 1, or 2
+        let subwayObstacles = [];
+        let subwaySpeed = 3;
+        let subwayScore = 0;
+
+        // Random counter for cringe mode
+        let cringeCounter = 0;
+        let cringeCounterTimer = 0;
+        let nextCounterIncrement = 600; // Start at 10 seconds (600 frames at 60fps)
+
+        // Ad system for cringe mode
+        let showAd = false;
+        let adTimer = 0;
+        let adDuration = 0;
+        let currentAd = 0;
+        let adX = 50;
+        let adY = 150;
+
+        // Subscribe button system
+        let showSubscribeButton = false;
+        let subscribeTimer = 0;
+        let subscribeDuration = 0;
+
+        // Sahur walking character
+        let sahurX = -100;
+        let sahurY = 20;
+        let sahurLegPhase = 0;
+
+        // Rainbow screen effect
+        let showRainbowScreen = false;
+        let rainbowScreenTimer = 0;
+        let rainbowScreenDuration = 0;
+        let nextRainbowScreenTime = 600; // Start at 10 seconds
+
+        const PIPE_WIDTH = 60;
+        const PIPE_GAP = 150;
+        const PIPE_SPEED = 2;
+        const PIPE_FREQUENCY = 150; // frames between pipes
+
+        // Colors
+        const SKY_COLOR = '#4ec0ca';
+        const GROUND_COLOR = '#ded895';
+        const PIPE_COLOR = '#5cb85c';
+        const PIPE_BORDER = '#4a9a4a';
+        const BIRD_COLOR = '#ffd700';
+
+        // Initialize game
+        function init() {
+            // Disable image smoothing for pixelated look
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+
+            document.getElementById('bestScore').textContent = bestScore;
+            drawGame();
+        }
+
+        // Bird object methods
+        function updateBird() {
+            if (!gameStarted || gameOver) return;
+
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+
+            // Prevent bird from going above canvas
+            if (bird.y < 0) {
+                bird.y = 0;
+                bird.velocity = 0;
+            }
+
+            // Check if bird hit the ground
+            if (bird.y + bird.height > canvas.height - 50) {
+                endGame();
+            }
+        }
+
+        function flapBird() {
+            if (!gameStarted) {
+                startGame();
+            }
+
+            if (!gameOver) {
+                bird.velocity = bird.jump;
+            }
+        }
+
+        function drawBird() {
+            const x = Math.floor(bird.x);
+            const y = Math.floor(bird.y);
+
+            if (cringeMode) {
+                // Draw Skibidi Toilet
+                // Toilet bowl (white)
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x, y + 10, 28, 14);
+
+                // Toilet bowl rim
+                ctx.fillStyle = '#e0e0e0';
+                ctx.fillRect(x - 2, y + 10, 32, 4);
+
+                // Toilet bowl inside (blue water)
+                ctx.fillStyle = '#4ec0ca';
+                ctx.fillRect(x + 4, y + 14, 20, 8);
+
+                // Head sticking out
+                ctx.fillStyle = '#ffdbac';
+                ctx.fillRect(x + 8, y, 16, 12);
+
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x + 10, y + 3, 4, 4);
+                ctx.fillRect(x + 18, y + 3, 4, 4);
+
+                // Pupils
+                ctx.fillStyle = 'black';
+                ctx.fillRect(x + 11, y + 4, 2, 2);
+                ctx.fillRect(x + 19, y + 4, 2, 2);
+
+                // Mouth
+                ctx.fillStyle = 'black';
+                ctx.fillRect(x + 12, y + 8, 8, 2);
+
+                // Toilet outline
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y + 10, 28, 14);
+                ctx.strokeRect(x - 2, y + 10, 32, 4);
+            } else {
+                // Draw pixelated bird body
+                ctx.fillStyle = BIRD_COLOR;
+                ctx.fillRect(x + 4, y, 24, 8);
+                ctx.fillRect(x, y + 8, 32, 12);
+                ctx.fillRect(x + 4, y + 20, 24, 4);
+
+                // Draw wing (darker yellow)
+                ctx.fillStyle = '#ffb700';
+                ctx.fillRect(x + 8, y + 12, 12, 8);
+
+                // Draw eye white
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x + 20, y + 6, 6, 6);
+
+                // Draw eye pupil
+                ctx.fillStyle = 'black';
+                ctx.fillRect(x + 22, y + 8, 3, 3);
+
+                // Draw beak
+                ctx.fillStyle = '#ff6347';
+                ctx.fillRect(x + 28, y + 10, 6, 2);
+                ctx.fillRect(x + 32, y + 8, 4, 6);
+
+                // Draw outline pixels for retro look
+                ctx.fillStyle = '#d4a017';
+                ctx.fillRect(x + 4, y, 24, 2);
+                ctx.fillRect(x, y + 8, 2, 12);
+                ctx.fillRect(x + 30, y + 8, 2, 12);
+            }
+        }
+
+        // Pipe methods
+        function createPipe() {
+            const minHeight = 50;
+            const maxHeight = canvas.height - PIPE_GAP - 100;
+            const topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+
+            pipes.push({
+                x: canvas.width,
+                topHeight: topHeight,
+                scored: false
+            });
+        }
+
+        function updatePipes() {
+            if (!gameStarted || gameOver) return;
+
+            // Create new pipes
+            if (frameCount % PIPE_FREQUENCY === 0) {
+                createPipe();
+            }
+
+            // Update pipe positions
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].x -= PIPE_SPEED;
+
+                // Check for collision
+                if (checkCollision(pipes[i])) {
+                    endGame();
+                }
+
+                // Check for score
+                if (!pipes[i].scored && pipes[i].x + PIPE_WIDTH < bird.x) {
+                    pipes[i].scored = true;
+                    score++;
+                    document.getElementById('scoreDisplay').textContent = score;
+                }
+
+                // Remove off-screen pipes
+                if (pipes[i].x + PIPE_WIDTH < 0) {
+                    pipes.splice(i, 1);
+                }
+            }
+        }
+
+        function getRainbowColor(offset) {
+            const hue = (frameCount * 2 + offset) % 360;
+            return `hsl(${hue}, 100%, 50%)`;
+        }
+
+        function drawPipes() {
+            for (let pipe of pipes) {
+                const x = Math.floor(pipe.x);
+                const topH = Math.floor(pipe.topHeight);
+
+                if (cringeMode) {
+                    // RAINBOW PIPES!
+                    // Draw top pipe body with rainbow stripes
+                    for (let j = 0; j < topH; j += 8) {
+                        ctx.fillStyle = getRainbowColor(j + x);
+                        ctx.fillRect(x, j, PIPE_WIDTH, 8);
+                    }
+
+                    // Draw top pipe cap with rainbow
+                    for (let j = 0; j < 20; j += 4) {
+                        ctx.fillStyle = getRainbowColor(topH - 20 + j + x);
+                        ctx.fillRect(x - 5, topH - 20 + j, PIPE_WIDTH + 10, 4);
+                    }
+
+                    // Draw bottom pipe with rainbow stripes
+                    const bottomY = Math.floor(pipe.topHeight + PIPE_GAP);
+                    const bottomHeight = canvas.height - bottomY - 50;
+                    for (let j = 0; j < bottomHeight; j += 8) {
+                        ctx.fillStyle = getRainbowColor(bottomY + j + x);
+                        ctx.fillRect(x, bottomY + j, PIPE_WIDTH, 8);
+                    }
+
+                    // Draw bottom pipe cap with rainbow
+                    for (let j = 0; j < 20; j += 4) {
+                        ctx.fillStyle = getRainbowColor(bottomY + j + x);
+                        ctx.fillRect(x - 5, bottomY + j, PIPE_WIDTH + 10, 4);
+                    }
+
+                    // Draw bold black outlines
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(x, 0, PIPE_WIDTH, topH);
+                    ctx.strokeRect(x - 5, topH - 20, PIPE_WIDTH + 10, 20);
+                    ctx.strokeRect(x, bottomY, PIPE_WIDTH, bottomHeight);
+                    ctx.strokeRect(x - 5, bottomY, PIPE_WIDTH + 10, 20);
+                } else {
+                    // Normal green pipes
+                    // Draw top pipe body
+                    ctx.fillStyle = PIPE_COLOR;
+                    ctx.fillRect(x, 0, PIPE_WIDTH, topH);
+
+                    // Add pixelated texture to top pipe
+                    ctx.fillStyle = '#4a9a4a';
+                    for (let i = 0; i < PIPE_WIDTH; i += 8) {
+                        for (let j = 0; j < topH; j += 8) {
+                            if ((i + j) % 16 === 0) {
+                                ctx.fillRect(x + i, j, 4, 4);
+                            }
+                        }
+                    }
+
+                    // Add highlights to top pipe
+                    ctx.fillStyle = '#6dd36d';
+                    ctx.fillRect(x + 4, 0, 8, topH);
+
+                    // Draw top pipe cap
+                    ctx.fillStyle = PIPE_COLOR;
+                    ctx.fillRect(x - 5, topH - 20, PIPE_WIDTH + 10, 20);
+
+                    // Cap highlight
+                    ctx.fillStyle = '#6dd36d';
+                    ctx.fillRect(x - 3, topH - 18, 8, 16);
+
+                    // Cap shadow
+                    ctx.fillStyle = '#4a9a4a';
+                    ctx.fillRect(x + PIPE_WIDTH - 4, topH - 18, 8, 16);
+
+                    // Draw bottom pipe
+                    const bottomY = Math.floor(pipe.topHeight + PIPE_GAP);
+                    const bottomHeight = canvas.height - bottomY - 50;
+                    ctx.fillStyle = PIPE_COLOR;
+                    ctx.fillRect(x, bottomY, PIPE_WIDTH, bottomHeight);
+
+                    // Add pixelated texture to bottom pipe
+                    ctx.fillStyle = '#4a9a4a';
+                    for (let i = 0; i < PIPE_WIDTH; i += 8) {
+                        for (let j = 0; j < bottomHeight; j += 8) {
+                            if ((i + j) % 16 === 0) {
+                                ctx.fillRect(x + i, bottomY + j, 4, 4);
+                            }
+                        }
+                    }
+
+                    // Add highlights to bottom pipe
+                    ctx.fillStyle = '#6dd36d';
+                    ctx.fillRect(x + 4, bottomY, 8, bottomHeight);
+
+                    // Draw bottom pipe cap
+                    ctx.fillStyle = PIPE_COLOR;
+                    ctx.fillRect(x - 5, bottomY, PIPE_WIDTH + 10, 20);
+
+                    // Cap highlight
+                    ctx.fillStyle = '#6dd36d';
+                    ctx.fillRect(x - 3, bottomY + 2, 8, 16);
+
+                    // Cap shadow
+                    ctx.fillStyle = '#4a9a4a';
+                    ctx.fillRect(x + PIPE_WIDTH - 4, bottomY + 2, 8, 16);
+
+                    // Draw bold black outlines
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 4;
+
+                    // Top pipe outline
+                    ctx.strokeRect(x, 0, PIPE_WIDTH, topH);
+                    // Top pipe cap outline
+                    ctx.strokeRect(x - 5, topH - 20, PIPE_WIDTH + 10, 20);
+
+                    // Bottom pipe outline
+                    ctx.strokeRect(x, bottomY, PIPE_WIDTH, bottomHeight);
+                    // Bottom pipe cap outline
+                    ctx.strokeRect(x - 5, bottomY, PIPE_WIDTH + 10, 20);
+                }
+            }
+        }
+
+        function checkCollision(pipe) {
+            // Check if bird is in pipe's x range
+            if (bird.x + bird.width > pipe.x && bird.x < pipe.x + PIPE_WIDTH) {
+                // Check if bird hit top or bottom pipe
+                if (bird.y < pipe.topHeight || bird.y + bird.height > pipe.topHeight + PIPE_GAP) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Game state methods
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('startScreen').classList.add('hide');
+        }
+
+        function endGame() {
+            gameOver = true;
+
+            // Update best score
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('flappyBestScore', bestScore);
+            }
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('bestScore').textContent = bestScore;
+            document.getElementById('gameOver').classList.add('show');
+        }
+
+        function restartGame() {
+            // Reset variables
+            bird.y = 250;
+            bird.velocity = 0;
+            pipes = [];
+            score = 0;
+            gameStarted = false;
+            gameOver = false;
+            frameCount = 0;
+
+            document.getElementById('scoreDisplay').textContent = '0';
+            document.getElementById('gameOver').classList.remove('show');
+            document.getElementById('startScreen').classList.remove('hide');
+
+            drawGame();
+        }
+
+        // Sahur walker drawing function
+        function drawSahurWalker() {
+            // Update position and animation
+            sahurX += 0.5;
+            if (sahurX > canvas.width + 100) {
+                sahurX = -100;
+            }
+            sahurLegPhase = (sahurLegPhase + 0.1) % (Math.PI * 2);
+
+            const x = Math.floor(sahurX);
+            const y = sahurY;
+
+            // Body (brown/orange robe)
+            ctx.fillStyle = '#d2691e';
+            ctx.fillRect(x, y + 20, 30, 35);
+
+            // Head
+            ctx.fillStyle = '#ffdbac';
+            ctx.fillRect(x + 8, y, 14, 20);
+
+            // Hat/headwear
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(x + 5, y - 5, 20, 8);
+
+            // Eyes
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x + 10, y + 8, 3, 3);
+            ctx.fillRect(x + 17, y + 8, 3, 3);
+
+            // Stick/drum mallet
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x + 25, y + 15, 20, 3);
+            ctx.fillRect(x + 42, y + 12, 6, 8);
+
+            // Legs (animated walking)
+            const leg1Offset = Math.sin(sahurLegPhase) * 5;
+            const leg2Offset = Math.sin(sahurLegPhase + Math.PI) * 5;
+
+            ctx.fillStyle = '#a0522d';
+            // Left leg
+            ctx.fillRect(x + 8, y + 55 + leg1Offset, 6, 10);
+            // Right leg
+            ctx.fillRect(x + 16, y + 55 + leg2Offset, 6, 10);
+
+            // Feet
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x + 6, y + 65 + leg1Offset, 10, 4);
+            ctx.fillRect(x + 14, y + 65 + leg2Offset, 10, 4);
+
+            // Text "tung" appearing above
+            if (Math.floor(sahurLegPhase / (Math.PI / 2)) % 2 === 0) {
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.strokeText('TUNG', x + 15, y - 10);
+                ctx.fillText('TUNG', x + 15, y - 10);
+            }
+        }
+
+        // Draw methods
+        function drawBackground() {
+            // Sky with pixel pattern
+            ctx.fillStyle = SKY_COLOR;
+            ctx.fillRect(0, 0, canvas.width, canvas.height - 50);
+
+            // Animate clouds - move slowly to the left
+            cloudOffset += 0.3;
+            const cloudSpacing = 80;
+            if (cloudOffset >= cloudSpacing) cloudOffset = 0;
+
+            // Add pixelated clouds (moving with seamless loop)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+
+            // Draw clouds in a repeating pattern
+            for (let i = 0; i < Math.ceil(canvas.width / cloudSpacing) + 2; i++) {
+                const x = (i * cloudSpacing) - cloudOffset;
+                const y = 50 + (i % 3) * 40;
+
+                // Only draw if cloud is visible on screen
+                if (x > -60 && x < canvas.width) {
+                    ctx.fillRect(x, y, 40, 8);
+                    ctx.fillRect(x - 8, y + 8, 56, 8);
+                    ctx.fillRect(x, y + 16, 40, 8);
+                }
+            }
+
+            // Draw Sahur walking character
+            drawSahurWalker();
+
+            // Animate ground
+            if (gameStarted && !gameOver) {
+                groundOffset += PIPE_SPEED;
+            }
+            const groundPatternSize = 16;
+            if (groundOffset >= groundPatternSize) groundOffset = 0;
+
+            if (cringeMode) {
+                // RAINBOW GROUND!
+                // Draw rainbow stripes
+                for (let i = 0; i < canvas.width; i += 4) {
+                    ctx.fillStyle = getRainbowColor(i + frameCount * 3);
+                    ctx.fillRect(i, canvas.height - 50, 4, 50);
+                }
+
+                // Draw animated rainbow grass blades
+                for (let i = -groundPatternSize; i < canvas.width + groundPatternSize; i += 8) {
+                    const x = i - groundOffset;
+                    ctx.fillStyle = getRainbowColor(i * 2);
+                    // Grass blade 1
+                    ctx.fillRect(x, canvas.height - 50, 2, 8);
+                    ctx.fillRect(x + 1, canvas.height - 50 - 2, 2, 2);
+
+                    // Grass blade 2
+                    ctx.fillRect(x + 4, canvas.height - 50 + 2, 2, 6);
+                    ctx.fillRect(x + 5, canvas.height - 50, 2, 2);
+                }
+            } else {
+                // Normal grass ground
+                // Base grass green
+                ctx.fillStyle = '#7ec850';
+                ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+
+                // Draw dirt layer at bottom
+                ctx.fillStyle = '#8b6f47';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+
+                // Add dirt texture
+                ctx.fillStyle = '#6b5230';
+                for (let i = -groundPatternSize; i < canvas.width + groundPatternSize; i += 4) {
+                    for (let j = 20; j < 50; j += 4) {
+                        const x = i - groundOffset;
+                        if ((i + j) % 8 === 0) {
+                            ctx.fillRect(x, canvas.height - 50 + j, 2, 2);
+                        }
+                    }
+                }
+
+                // Draw grass blades (moving)
+                ctx.fillStyle = '#5ea830';
+                for (let i = -groundPatternSize; i < canvas.width + groundPatternSize; i += 8) {
+                    const x = i - groundOffset;
+                    // Grass blade 1
+                    ctx.fillRect(x, canvas.height - 50, 2, 8);
+                    ctx.fillRect(x + 1, canvas.height - 50 - 2, 2, 2);
+
+                    // Grass blade 2
+                    ctx.fillRect(x + 4, canvas.height - 50 + 2, 2, 6);
+                    ctx.fillRect(x + 5, canvas.height - 50, 2, 2);
+                }
+
+                // Add lighter grass highlights
+                ctx.fillStyle = '#9be86b';
+                for (let i = -groundPatternSize; i < canvas.width + groundPatternSize; i += 16) {
+                    const x = i - groundOffset;
+                    ctx.fillRect(x + 2, canvas.height - 50 + 4, 2, 4);
+                    ctx.fillRect(x + 10, canvas.height - 50 + 6, 2, 4);
+                }
+
+                // Draw grass top edge line
+                ctx.fillStyle = '#6fb840';
+                for (let i = 0; i < canvas.width; i += 2) {
+                    ctx.fillRect(i, canvas.height - 50, 2, 2);
+                }
+            }
+        }
+
+        // Subway Surfers mini-game functions
+        function updateSubwaySurfers() {
+            if (!cringeMode || !gameStarted || gameOver) return;
+
+            // Create obstacles
+            if (frameCount % 60 === 0) {
+                const randomLane = Math.floor(Math.random() * 3);
+                subwayObstacles.push({ lane: randomLane, y: 0 });
+            }
+
+            // AI: Auto-play - look ahead and dodge obstacles
+            for (let obs of subwayObstacles) {
+                // If obstacle is approaching (within certain range)
+                if (obs.y > 80 && obs.y < 120) {
+                    // Move away from the obstacle's lane
+                    if (obs.lane === subwayPlayer.lane) {
+                        // Dodge left or right randomly
+                        if (subwayPlayer.lane === 0) {
+                            subwayPlayer.lane = 1; // Move right if on left edge
+                        } else if (subwayPlayer.lane === 2) {
+                            subwayPlayer.lane = 1; // Move left if on right edge
+                        } else {
+                            // In middle lane, choose randomly
+                            subwayPlayer.lane = Math.random() < 0.5 ? 0 : 2;
+                        }
+                        break; // Only dodge one obstacle at a time
+                    }
+                }
+            }
+
+            // Update obstacles
+            for (let i = subwayObstacles.length - 1; i >= 0; i--) {
+                subwayObstacles[i].y += subwaySpeed;
+
+                // Check collision
+                if (subwayObstacles[i].lane === subwayPlayer.lane &&
+                    subwayObstacles[i].y > 130 && subwayObstacles[i].y < 160) {
+                    // Hit obstacle - reset
+                    subwayObstacles = [];
+                    subwayScore = 0;
+                }
+
+                // Score point when obstacle passes
+                if (subwayObstacles[i].y > 160 && !subwayObstacles[i].scored) {
+                    subwayObstacles[i].scored = true;
+                    subwayScore++;
+                }
+
+                // Remove off-screen obstacles
+                if (subwayObstacles[i].y > 180) {
+                    subwayObstacles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawSubwaySurfers() {
+            if (!cringeMode) return;
+
+            const miniX = canvas.width - 130;
+            const miniY = 10;
+            const miniW = 120;
+            const miniH = 180;
+
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(miniX, miniY, miniW, miniH);
+            ctx.strokeStyle = '#ff6b00';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(miniX, miniY, miniW, miniH);
+
+            // Title
+            ctx.fillStyle = '#ff6b00';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SUBWAY SURFERS', miniX + miniW / 2, miniY + 12);
+
+            // Lanes
+            const laneWidth = miniW / 3;
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(miniX + i * laneWidth, miniY + 20);
+                ctx.lineTo(miniX + i * laneWidth, miniY + miniH);
+                ctx.stroke();
+            }
+
+            // Draw player
+            const playerX = miniX + subwayPlayer.lane * laneWidth + laneWidth / 2;
+            const playerY = miniY + 150;
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(playerX - 10, playerY - 10, 20, 20);
+            ctx.fillStyle = '#ffdbac';
+            ctx.fillRect(playerX - 8, playerY - 15, 16, 8);
+            // Eyes
+            ctx.fillStyle = 'black';
+            ctx.fillRect(playerX - 5, playerY - 12, 3, 3);
+            ctx.fillRect(playerX + 2, playerY - 12, 3, 3);
+
+            // Draw obstacles
+            for (let obs of subwayObstacles) {
+                const obsX = miniX + obs.lane * laneWidth + laneWidth / 2;
+                const obsY = miniY + 20 + obs.y;
+                ctx.fillStyle = '#8b4513';
+                ctx.fillRect(obsX - 12, obsY, 24, 15);
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(obsX - 10, obsY + 2, 20, 11);
+            }
+
+            // Score
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Score: ' + subwayScore, miniX + 5, miniY + miniH - 5);
+
+            // Auto-play hint
+            ctx.fillStyle = '#aaa';
+            ctx.font = '8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('AUTO-PLAYING', miniX + miniW / 2, miniY + miniH - 20);
+        }
+
+        function drawGame() {
+            drawBackground();
+            drawPipes();
+            drawBird();
+
+            // Draw Subway Surfers in corner
+            if (cringeMode) {
+                drawSubwaySurfers();
+
+                // Draw random counter in bottom-left corner
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(10, canvas.height - 60, 80, 50);
+                ctx.strokeStyle = '#ff00ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(10, canvas.height - 60, 80, 50);
+
+                // Counter value
+                ctx.fillStyle = '#00ff00';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cringeCounter, 50, canvas.height - 35);
+
+                // Label
+                ctx.fillStyle = '#ffff00';
+                ctx.font = '10px Arial';
+                ctx.fillText('VIEWS', 50, canvas.height - 15);
+            }
+
+            // Draw ads if active
+            if (showAd && cringeMode) {
+                const centerX = adX + 150;
+                const centerY = adY + 150;
+
+                // Ad background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.fillRect(adX, adY, 300, 300);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 5;
+                ctx.strokeRect(adX, adY, 300, 300);
+
+                // Different ads
+                if (currentAd === 0) {
+                    // Mobile game ad
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(adX + 10, adY + 10, 280, 100);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('PLAY NOW!', centerX, adY + 50);
+                    ctx.fillText('FREE GAME!', centerX, adY + 80);
+
+                    ctx.fillStyle = 'black';
+                    ctx.font = '16px Arial';
+                    ctx.fillText('Download Toilet Clash', centerX, adY + 140);
+                    ctx.fillText('99% CANT BEAT LEVEL 1!', centerX, adY + 170);
+
+                    // Fake download button
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(adX + 75, adY + 200, 150, 50);
+                    ctx.fillStyle = 'black';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillText('INSTALL', centerX, adY + 232);
+
+                } else if (currentAd === 1) {
+                    // Premium subscription ad
+                    ctx.fillStyle = '#ffd700';
+                    ctx.fillRect(adX + 10, adY + 10, 280, 100);
+                    ctx.fillStyle = 'black';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('GO PREMIUM!', centerX, adY + 60);
+
+                    ctx.fillStyle = 'black';
+                    ctx.font = '14px Arial';
+                    ctx.fillText('Remove ads for only', centerX, adY + 140);
+                    ctx.font = 'bold 32px Arial';
+                    ctx.fillText('$9.99/month', centerX, adY + 180);
+
+                    // Fake button
+                    ctx.fillStyle = '#ff6b00';
+                    ctx.fillRect(adX + 75, adY + 210, 150, 40);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.fillText('SUBSCRIBE', centerX, adY + 235);
+
+                } else {
+                    // Product ad
+                    ctx.fillStyle = '#00bfff';
+                    ctx.fillRect(adX + 10, adY + 10, 280, 100);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 26px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('GAMERS NEED THIS!', centerX, adY + 50);
+                    ctx.fillText('⚡ ENERGY DRINK ⚡', centerX, adY + 85);
+
+                    ctx.fillStyle = 'black';
+                    ctx.font = '16px Arial';
+                    ctx.fillText('Increase your gaming skills', centerX, adY + 140);
+                    ctx.fillText('by 300%!', centerX, adY + 165);
+
+                    // Fake button
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(adX + 75, adY + 200, 150, 50);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillText('BUY NOW', centerX, adY + 232);
+                }
+
+                // Skip timer
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(adX + 230, adY + 10, 60, 30);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                const timeLeft = Math.ceil(adDuration / 60);
+                ctx.fillText(`Ad ${timeLeft}s`, adX + 260, adY + 30);
+            }
+
+            // Draw subscribe button if active
+            if (showSubscribeButton && cringeMode) {
+                const btnX = canvas.width / 2 - 100;
+                const btnY = 50;
+                const btnW = 200;
+                const btnH = 60;
+
+                // Animated rainbow background
+                for (let i = 0; i < btnW; i += 4) {
+                    ctx.fillStyle = getRainbowColor(i + frameCount * 5);
+                    ctx.fillRect(btnX + i, btnY, 4, btnH);
+                }
+
+                // Button border - pulsing animation
+                const pulseSize = Math.sin(frameCount / 10) * 3 + 5;
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = pulseSize;
+                ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+                // Black inner border
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(btnX + 5, btnY + 5, btnW - 10, btnH - 10);
+
+                // Subscribe text with shadow
+                ctx.fillStyle = 'black';
+                ctx.font = 'bold 28px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('SUBSCRIBE', canvas.width / 2 + 2, btnY + btnH / 2 + 2);
+
+                ctx.fillStyle = 'white';
+                ctx.fillText('SUBSCRIBE', canvas.width / 2, btnY + btnH / 2);
+
+                // Bell emoji
+                ctx.font = '30px Arial';
+                ctx.fillText('🔔', canvas.width / 2 + 85, btnY + btnH / 2);
+
+                // Sparkle effects around button
+                const sparkles = ['✨', '⭐', '💫'];
+                for (let i = 0; i < 4; i++) {
+                    const angle = (frameCount / 30 + i * Math.PI / 2);
+                    const sparkleX = canvas.width / 2 + Math.cos(angle) * 130;
+                    const sparkleY = btnY + btnH / 2 + Math.sin(angle) * 50;
+                    ctx.font = '20px Arial';
+                    ctx.fillText(sparkles[i % 3], sparkleX, sparkleY);
+                }
+
+                // Arrow pointing to button
+                ctx.fillStyle = '#ff0000';
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText('👇', canvas.width / 2, btnY + btnH + 30);
+            }
+
+            // Draw rainbow screen effect if active
+            if (showRainbowScreen && cringeMode) {
+                // Rainbow overlay with animated stripes
+                const stripeWidth = 20;
+                for (let i = 0; i < canvas.width; i += stripeWidth) {
+                    const hue = (i * 2 + frameCount * 5) % 360;
+                    ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.4)`;
+                    ctx.fillRect(i, 0, stripeWidth, canvas.height);
+                }
+
+                // Horizontal rainbow stripes overlayed
+                for (let j = 0; j < canvas.height; j += stripeWidth) {
+                    const hue = (j * 2 + frameCount * 5 + 180) % 360;
+                    ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
+                    ctx.fillRect(0, j, canvas.width, stripeWidth);
+                }
+
+                // Rainbow border pulse
+                const borderSize = Math.sin(frameCount / 10) * 5 + 10;
+                for (let i = 0; i < borderSize; i++) {
+                    const hue = (i * 30 + frameCount * 10) % 360;
+                    ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(i, i, canvas.width - i * 2, canvas.height - i * 2);
+                }
+
+                // Rainbow text
+                ctx.font = 'bold 60px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const rainbowText = 'RAINBOW MODE!';
+                for (let i = 0; i < rainbowText.length; i++) {
+                    const hue = (i * 30 + frameCount * 5) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    const xOffset = (i - rainbowText.length / 2) * 35;
+                    const yOffset = Math.sin(frameCount / 10 + i) * 10;
+                    ctx.strokeText(rainbowText[i], canvas.width / 2 + xOffset, canvas.height / 2 + yOffset);
+                    ctx.fillText(rainbowText[i], canvas.width / 2 + xOffset, canvas.height / 2 + yOffset);
+                }
+            }
+
+            // Draw skull effect if active
+            if (showSkullEffect && cringeMode) {
+                // Dim the screen
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw skull emoji
+                ctx.font = 'bold 120px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('💀', canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        // Toggle cringe mode
+        function toggleCringeMode() {
+            cringeMode = !cringeMode;
+            const btn = document.querySelector('.cringe-mode-btn');
+            const watchText = document.getElementById('watchToEndText');
+            if (cringeMode) {
+                btn.textContent = 'Goofy ah Mode: ON';
+                btn.style.background = 'linear-gradient(135deg, #00ff00 0%, #39ff14 100%)';
+                watchText.style.display = 'block';
+                alert('Goofy ah Mode Activated! Prepare for chaos!');
+            } else {
+                btn.textContent = 'Goofy ah Mode';
+                btn.style.background = 'linear-gradient(135deg, #ff1493 0%, #ff69b4 100%)';
+                watchText.style.display = 'none';
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameStarted && !gameOver) {
+                frameCount++;
+
+                // Cringe mode effects
+                if (cringeMode) {
+                    cringeEffectTimer++;
+
+                    // Trigger skull effect every 5-10 seconds (300-600 frames at 60fps)
+                    const nextEffectTime = 300 + Math.random() * 300;
+                    if (cringeEffectTimer > nextEffectTime) {
+                        showSkullEffect = true;
+                        skullEffectDuration = 60; // Show for 1 second
+                        cringeEffectTimer = 0;
+                    }
+
+                    // Handle skull effect duration
+                    if (showSkullEffect) {
+                        skullEffectDuration--;
+                        if (skullEffectDuration <= 0) {
+                            showSkullEffect = false;
+                        }
+                    }
+
+                    // Random counter increment every 10-20 seconds
+                    cringeCounterTimer++;
+                    if (cringeCounterTimer >= nextCounterIncrement) {
+                        cringeCounter++;
+                        cringeCounterTimer = 0;
+                        // Set next increment time randomly between 10-20 seconds (600-1200 frames)
+                        nextCounterIncrement = 600 + Math.floor(Math.random() * 600);
+                    }
+
+                    // Ad system - show ad every 10 seconds for 2 seconds
+                    adTimer++;
+                    if (adTimer >= 600 && !showAd) { // 600 frames = 10 seconds at 60fps
+                        showAd = true;
+                        adDuration = 120; // 120 frames = 2 seconds
+                        adTimer = 0;
+                        currentAd = Math.floor(Math.random() * 3); // Random ad type
+
+                        // Random position for ad
+                        adX = Math.random() * (canvas.width - 350) + 25;
+                        adY = Math.random() * (canvas.height - 350) + 25;
+                    }
+
+                    // Handle ad duration
+                    if (showAd) {
+                        adDuration--;
+                        if (adDuration <= 0) {
+                            showAd = false;
+                        }
+                    }
+
+                    // Subscribe button - show every 5 seconds for 3 seconds
+                    subscribeTimer++;
+                    if (subscribeTimer >= 300 && !showSubscribeButton) { // 300 frames = 5 seconds
+                        showSubscribeButton = true;
+                        subscribeDuration = 180; // 180 frames = 3 seconds
+                        subscribeTimer = 0;
+                    }
+
+                    // Handle subscribe button duration
+                    if (showSubscribeButton) {
+                        subscribeDuration--;
+                        if (subscribeDuration <= 0) {
+                            showSubscribeButton = false;
+                        }
+                    }
+
+                    // Rainbow screen effect - show every 10-30 seconds for 5 seconds
+                    rainbowScreenTimer++;
+                    if (rainbowScreenTimer >= nextRainbowScreenTime && !showRainbowScreen) {
+                        showRainbowScreen = true;
+                        rainbowScreenDuration = 300; // 300 frames = 5 seconds
+                        rainbowScreenTimer = 0;
+                        // Next time between 10-30 seconds (600-1800 frames)
+                        nextRainbowScreenTime = 600 + Math.floor(Math.random() * 1200);
+                    }
+
+                    // Handle rainbow screen duration
+                    if (showRainbowScreen) {
+                        rainbowScreenDuration--;
+                        if (rainbowScreenDuration <= 0) {
+                            showRainbowScreen = false;
+                        }
+                    }
+                }
+            }
+
+            updateBird();
+            updatePipes();
+            updateSubwaySurfers();
+            drawGame();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', flapBird);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flapBird();
+            }
+
+            // Subway Surfers controls
+            if (cringeMode && gameStarted && !gameOver) {
+                if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (subwayPlayer.lane > 0) {
+                        subwayPlayer.lane--;
+                    }
+                }
+                if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    if (subwayPlayer.lane < 2) {
+                        subwayPlayer.lane++;
+                    }
+                }
+            }
+        });
+
+        // Start the game
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>

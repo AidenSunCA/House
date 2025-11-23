@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2D Gun Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #2c3e50 0%, #34495e 100%);
+            cursor: crosshair;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        #upgradePanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 10;
+            min-width: 200px;
+        }
+        .upgrade-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+        }
+        .upgrade-btn:hover {
+            background: #229954;
+        }
+        .upgrade-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .gun-name {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        #crosshair {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 2px solid red;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        #crosshair::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: red;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: red;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            z-index: 20;
+        }
+        #gameOverScreen {
+            display: none;
+        }
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #c0392b;
+        }
+        .instruction {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="crosshair"></div>
+
+        <div id="hud">
+            <div>Score: <span id="score">0</span></div>
+            <div>Money: $<span id="money">0</span></div>
+            <div>Ammo: <span id="ammo">30</span></div>
+            <div>Health: <span id="health">100</span></div>
+            <div>Wave: <span id="wave">1</span></div>
+        </div>
+
+        <div id="upgradePanel">
+            <h3 style="margin-top: 0;">🔫 Gun Shop</h3>
+            <div>Current: <span class="gun-name" id="currentGun">Pistol</span></div>
+            <div style="font-size: 14px; margin: 10px 0;">Damage: <span id="gunDamage">1</span></div>
+            <hr style="border-color: #555;">
+            <button class="upgrade-btn" onclick="buyGun(1)">
+                <div>Shotgun</div>
+                <div style="font-size: 12px;">$500 | 3 Damage</div>
+            </button>
+            <button class="upgrade-btn" onclick="buyGun(2)">
+                <div>Assault Rifle</div>
+                <div style="font-size: 12px;">$1500 | 5 Damage</div>
+            </button>
+            <button class="upgrade-btn" onclick="buyGun(3)">
+                <div>Sniper Rifle</div>
+                <div style="font-size: 12px;">$3000 | 10 Damage</div>
+            </button>
+        </div>
+
+        <div id="startScreen">
+            <h1>🔫 2D GUN GAME 🔫</h1>
+            <div class="instruction">Click to shoot enemies!</div>
+            <div class="instruction">Arrow Keys or A/D to move</div>
+            <div class="instruction">Press R to reload</div>
+            <div class="instruction">Don't let enemies reach you!</div>
+            <button onclick="startGame()">START GAME</button>
+        </div>
+
+        <div id="gameOverScreen">
+            <h1>GAME OVER</h1>
+            <div id="finalScore"></div>
+            <button onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const crosshair = document.getElementById('crosshair');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let gameActive = false;
+        let score = 0;
+        let money = 0;
+        let ammo = 30;
+        let maxAmmo = 30;
+        let health = 100;
+        let wave = 1;
+        let enemies = [];
+        let bullets = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        let keys = {};
+        let currentGunLevel = 0;
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            width: 40,
+            height: 40,
+            speed: 7
+        };
+
+        const guns = [
+            { name: 'Pistol', damage: 1, color: '#95a5a6', cost: 0 },
+            { name: 'Shotgun', damage: 3, color: '#e67e22', cost: 500 },
+            { name: 'Assault Rifle', damage: 5, color: '#e74c3c', cost: 1500 },
+            { name: 'Sniper Rifle', damage: 10, color: '#9b59b6', cost: 3000 }
+        ];
+
+        class Enemy {
+            constructor() {
+                this.width = 40;
+                this.height = 40;
+                this.x = Math.random() * (canvas.width - this.width);
+                this.y = -this.height;
+                // Start slower, gradually increase speed
+                this.speed = 0.5 + Math.random() * 0.5 + (wave * 0.2);
+                // Health increases every 5 waves instead of every 3
+                this.health = 1 + Math.floor(wave / 5);
+                this.color = this.getColor();
+            }
+
+            getColor() {
+                const colors = ['#e74c3c', '#e67e22', '#9b59b6'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.y += this.speed;
+
+                // Check if reached player
+                if (this.y > canvas.height - 150) {
+                    // Less damage at start (5 damage instead of 10)
+                    health -= 5;
+                    updateHUD();
+                    return true; // Remove enemy
+                }
+                return false;
+            }
+
+            draw() {
+                // Draw enemy body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Draw enemy face
+                ctx.fillStyle = '#000';
+                ctx.fillRect(this.x + 10, this.y + 10, 5, 5);
+                ctx.fillRect(this.x + 25, this.y + 10, 5, 5);
+                ctx.fillRect(this.x + 10, this.y + 25, 20, 5);
+
+                // Health bar
+                if (this.health > 1) {
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.fillRect(this.x, this.y - 10, (this.width * this.health) / (1 + Math.floor(wave / 5)), 5);
+                }
+            }
+
+            hit() {
+                this.health--;
+                return this.health <= 0;
+            }
+        }
+
+        class Bullet {
+            constructor(x, y, targetX, targetY) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.atan2(targetY - y, targetX - x);
+                this.velocityX = Math.cos(angle) * 10;
+                this.velocityY = Math.sin(angle) * 10;
+                this.radius = 3;
+                this.damage = guns[currentGunLevel].damage;
+                this.color = guns[currentGunLevel].color;
+            }
+
+            update() {
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                return this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            crosshair.style.display = 'block';
+            gameActive = true;
+            score = 0;
+            money = 0;
+            ammo = 30;
+            health = 100;
+            wave = 1;
+            currentGunLevel = 0;
+            enemies = [];
+            bullets = [];
+            updateHUD();
+            updateGunDisplay();
+            gameLoop();
+            spawnEnemies();
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            startGame();
+        }
+
+        function spawnEnemies() {
+            if (!gameActive) return;
+
+            // Start with fewer enemies (2), gradually increase
+            const enemyCount = 2 + Math.floor(wave * 1.5);
+            // More time between spawns at start, gets faster
+            const spawnDelay = Math.max(800, 2000 - (wave * 50));
+
+            for (let i = 0; i < enemyCount; i++) {
+                setTimeout(() => {
+                    if (gameActive) enemies.push(new Enemy());
+                }, i * spawnDelay);
+            }
+
+            // Next wave
+            setTimeout(() => {
+                if (gameActive && enemies.length === 0) {
+                    wave++;
+                    updateHUD();
+                    spawnEnemies();
+                }
+            }, enemyCount * spawnDelay + 3000);
+        }
+
+        function shoot(x, y) {
+            if (!gameActive || ammo <= 0) return;
+
+            ammo--;
+            updateHUD();
+
+            bullets.push(new Bullet(player.x + player.width / 2, player.y, x, y));
+
+            // Muzzle flash effect
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function reload() {
+            if (!gameActive) return;
+            ammo = maxAmmo;
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('money').textContent = money;
+            document.getElementById('ammo').textContent = ammo;
+            document.getElementById('health').textContent = health;
+            document.getElementById('wave').textContent = wave;
+
+            if (health <= 0) {
+                endGame();
+            }
+        }
+
+        function updateGunDisplay() {
+            document.getElementById('currentGun').textContent = guns[currentGunLevel].name;
+            document.getElementById('gunDamage').textContent = guns[currentGunLevel].damage;
+        }
+
+        function buyGun(gunLevel) {
+            if (!gameActive) return;
+
+            const gun = guns[gunLevel];
+
+            if (currentGunLevel >= gunLevel) {
+                alert('You already have this gun or better!');
+                return;
+            }
+
+            if (money < gun.cost) {
+                alert(`Not enough money! Need $${gun.cost}, you have $${money}`);
+                return;
+            }
+
+            money -= gun.cost;
+            currentGunLevel = gunLevel;
+            updateHUD();
+            updateGunDisplay();
+
+            // Show upgrade message
+            ctx.fillStyle = '#2ecc71';
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Upgraded to ${gun.name}!`, canvas.width / 2, canvas.height / 2);
+            ctx.textAlign = 'left';
+        }
+
+        function endGame() {
+            gameActive = false;
+            crosshair.style.display = 'none';
+            document.getElementById('finalScore').innerHTML =
+                `<h2>Wave: ${wave}</h2><h2>Score: ${score}</h2>`;
+            document.getElementById('gameOverScreen').style.display = 'block';
+        }
+
+        function updatePlayer() {
+            // Move left
+            if ((keys['ArrowLeft'] || keys['a'] || keys['A']) && player.x > 0) {
+                player.x -= player.speed;
+            }
+            // Move right
+            if ((keys['ArrowRight'] || keys['d'] || keys['D']) && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update player movement
+            updatePlayer();
+
+            // Draw player
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(player.x + 15, player.y - 20, 10, 25); // Gun
+
+            // Update and draw bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].draw();
+                if (bullets[i].update()) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Update and draw enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].draw();
+                if (enemies[i].update()) {
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                // Check bullet collision
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const dx = bullets[j].x - (enemies[i].x + enemies[i].width / 2);
+                    const dy = bullets[j].y - (enemies[i].y + enemies[i].height / 2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < enemies[i].width / 2) {
+                        // Apply damage based on bullet damage
+                        const bulletDamage = bullets[j].damage;
+                        bullets.splice(j, 1);
+
+                        // Hit enemy multiple times based on damage
+                        for (let d = 0; d < bulletDamage; d++) {
+                            if (enemies[i].hit()) {
+                                score += 10 * wave;
+                                money += 50; // Earn money for each kill
+                                enemies.splice(i, 1);
+                                updateHUD();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Check if wave is complete
+            if (enemies.length === 0 && gameActive) {
+                setTimeout(() => {
+                    if (gameActive) {
+                        wave++;
+                        updateHUD();
+                        spawnEnemies();
+                    }
+                }, 2000);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', (e) => {
+            if (gameActive) {
+                shoot(e.clientX, e.clientY);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            crosshair.style.left = (mouseX - 15) + 'px';
+            crosshair.style.top = (mouseY - 15) + 'px';
+        });
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+
+            if (e.key === 'r' || e.key === 'R') {
+                reload();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
+        });
+    </script>
+</body>
+</html>

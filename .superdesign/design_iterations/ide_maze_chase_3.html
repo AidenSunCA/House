@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOT MUNCHER - Classic Maze Chase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: #000;
+            color: #ffff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            text-align: center;
+            border: 6px solid #1e90ff;
+            padding: 25px;
+            background: #000;
+            box-shadow: 0 0 60px #1e90ff, inset 0 0 40px rgba(30, 144, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 44px;
+            color: #000000;
+            text-shadow:
+                3px 3px 0 #ff0000,
+                6px 6px 0 #ff00ff,
+                9px 9px 0 #00ffff;
+            margin-bottom: 15px;
+            animation: rainbow 3s infinite;
+        }
+
+        @keyframes rainbow {
+            0% { color: #ffff00; }
+            25% { color: #ff00ff; }
+            50% { color: #00ffff; }
+            75% { color: #00ff00; }
+            100% { color: #ffff00; }
+        }
+
+        #gameCanvas {
+            border: 4px solid #1e90ff;
+            background: #000;
+            display: block;
+            margin: 15px auto;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            box-shadow: 0 0 40px rgba(30, 144, 255, 0.5);
+        }
+
+        .controls {
+            background: rgb(4, 111, 219);
+            border: 3px solid #1e90ff;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #00ffff;
+        }
+
+        .controls div {
+            margin: 6px 0;
+            color: #000000;
+            font-size: 11px;
+        }
+
+        #score, #lives, #level {
+            display: inline-block;
+            font-size: 18px;
+            margin: 8px;
+            padding: 10px 18px;
+            border: 3px solid #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+            color: #ffff00;
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+        }
+
+        .event-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #ff00ff;
+            padding: 12px;
+            font-size: 11px;
+            max-width: 240px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+        }
+
+        .event-log {
+            color: #00ffff;
+            font-size: 9px;
+            margin: 3px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startButton {
+            background: linear-gradient(180deg, #ff00ff, #ff0080);
+            color: #fff;
+            border: 4px solid #ffff00;
+            padding: 16px 40px;
+            font-size: 22px;
+            font-family: 'Arial Black', Arial, sans-serif;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+            transition: all 0.3s;
+            margin: 15px;
+            text-transform: uppercase;
+        }
+
+        #startButton:hover {
+            background: linear-gradient(180deg, #ff0080, #ff00ff);
+            box-shadow: 0 0 50px rgba(255, 0, 255, 1);
+            transform: scale(1.05);
+        }
+
+        .pixel-text {
+            font-size: 11px;
+            color: #00ffff;
+            margin-top: 15px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #00ff00;
+            margin: 12px 0;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .ghost-icon {
+            display: inline-block;
+            font-size: 20px;
+            margin: 0 5px;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body onload="initGame()" onresize="handleResize()">
+    <div id="gameContainer">
+        <h1>DOT MUNCHER</h1>
+
+        <div class="controls">
+            <h3>⚡ CONTROLS & EVENTS ⚡</h3>
+            <div><strong>ONLOAD:</strong> Maze and ghosts generated</div>
+            <div><strong>ONKEYDOWN:</strong> Arrow keys or WASD to move</div>
+            <div><strong>ONCLICK:</strong> Click to set movement direction</div>
+            <div><strong>ONMOUSEMOVE:</strong> Hover effects on canvas</div>
+            <div><strong>ONRESIZE:</strong> Dynamic canvas adjustment</div>
+        </div>
+
+        <div>
+            <span id="score">SCORE: 00000</span>
+            <span id="lives">LIVES: <span class="ghost-icon">●●●</span></span>
+            <span id="level">LEVEL: 01</span>
+        </div>
+
+        <canvas id="gameCanvas" width="700" height="700"
+                onclick="handleClick(event)"
+                onmousemove="handleHover(event)"></canvas>
+
+        <div class="status" id="status">
+            AVOID THE GHOSTS <span class="ghost-icon">👻👻👻👻</span> EAT ALL DOTS!
+        </div>
+
+        <button id="startButton" onclick="startGame()">▶ START GAME ◀</button>
+
+        <div class="pixel-text">
+            ▓▓▓ CLASSIC ARCADE MAZE CHASE ▓▓▓<br>
+            © 2025 DOT MUNCHER ARCADE
+        </div>
+    </div>
+
+    <div class="event-indicator">
+        <strong style="color: #ff00ff;">🎮 EVENT LOG:</strong>
+        <div id="eventLog"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let playerX = 1;
+        let playerY = 1;
+        let playerDir = 0; // 0=right, 1=down, 2=left, 3=up
+        let nextDir = 0;
+        let ghosts = [];
+        let maze = [];
+        let dots = [];
+        let tileSize = 35;
+        let mazeWidth = 20;
+        let mazeHeight = 20;
+        let hoverX = 0;
+        let hoverY = 0;
+
+        // EVENT 1: ONLOAD - Initialize game when page loads
+        function initGame() {
+            logEvent('ONLOAD: DOT MUNCHER initialized!');
+            generateMaze();
+            drawStartScreen();
+        }
+
+        // EVENT 2: ONCLICK - Set direction on click
+        function handleClick(event) {
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            const tileX = Math.floor(clickX / tileSize);
+            const tileY = Math.floor(clickY / tileSize);
+
+            // Set direction towards clicked tile
+            if (Math.abs(tileX - playerX) > Math.abs(tileY - playerY)) {
+                nextDir = tileX > playerX ? 0 : 2;
+            } else {
+                nextDir = tileY > playerY ? 1 : 3;
+            }
+
+            logEvent('ONCLICK: Direction set to ' + ['RIGHT', 'DOWN', 'LEFT', 'UP'][nextDir]);
+        }
+
+        // EVENT 3: ONMOUSEMOVE - Track hover for effects
+        function handleHover(event) {
+            const rect = canvas.getBoundingClientRect();
+            hoverX = event.clientX - rect.left;
+            hoverY = event.clientY - rect.top;
+            logEvent('ONMOUSEMOVE: Hover [' + Math.floor(hoverX) + ',' + Math.floor(hoverY) + ']');
+        }
+
+        // EVENT 4: ONKEYDOWN - Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+
+            const keyMap = {
+                'ArrowRight': 0, 'd': 0, 'D': 0,
+                'ArrowDown': 1, 's': 1, 'S': 1,
+                'ArrowLeft': 2, 'a': 2, 'A': 2,
+                'ArrowUp': 3, 'w': 3, 'W': 3
+            };
+
+            if (e.key in keyMap) {
+                e.preventDefault();
+                nextDir = keyMap[e.key];
+                logEvent('ONKEYDOWN: ' + ['→', '↓', '←', '↑'][nextDir] + ' pressed');
+            }
+        });
+
+        // EVENT 5: ONRESIZE - Adjust on window resize
+        function handleResize() {
+            logEvent('ONRESIZE: Viewport adjusted');
+        }
+
+        function logEvent(message) {
+            const log = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'event-log';
+            entry.textContent = '▶ ' + message;
+            log.insertBefore(entry, log.firstChild);
+
+            while (log.children.length > 12) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function generateMaze() {
+            // Create simple maze with paths
+            maze = [];
+            for (let y = 0; y < mazeHeight; y++) {
+                maze[y] = [];
+                for (let x = 0; x < mazeWidth; x++) {
+                    // Border walls
+                    if (x === 0 || x === mazeWidth - 1 || y === 0 || y === mazeHeight - 1) {
+                        maze[y][x] = 1;
+                    }
+                    // Create patterns
+                    else if ((x % 3 === 0 && y % 3 === 0) || (x % 5 === 0 && y % 2 === 1)) {
+                        maze[y][x] = 1;
+                    } else {
+                        maze[y][x] = 0;
+                    }
+                }
+            }
+
+            // Ensure starting position is clear
+            maze[1][1] = 0;
+            maze[1][2] = 0;
+            maze[2][1] = 0;
+
+            // Generate dots
+            dots = [];
+            for (let y = 0; y < mazeHeight; y++) {
+                for (let x = 0; x < mazeWidth; x++) {
+                    if (maze[y][x] === 0 && !(x === 1 && y === 1)) {
+                        dots.push({ x, y, collected: false });
+                    }
+                }
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            lives = 3;
+            playerX = 1;
+            playerY = 1;
+            playerDir = 0;
+            nextDir = 0;
+
+            // Reset dots
+            dots.forEach(dot => dot.collected = false);
+
+            // Spawn ghosts
+            ghosts = [
+                { x: 18, y: 18, color: '#ff0000', dir: 2 },
+                { x: 18, y: 1, color: '#ff00ff', dir: 3 },
+                { x: 1, y: 18, color: '#00ffff', dir: 0 },
+                { x: 10, y: 10, color: '#ffaa00', dir: 1 }
+            ];
+
+            document.getElementById('startButton').style.display = 'none';
+            logEvent('GAME START! MUNCH ALL DOTS!');
+
+            gameLoop();
+        }
+
+        function drawStartScreen() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 700, 700);
+
+            // Draw mini maze preview
+            for (let y = 5; y < 15; y++) {
+                for (let x = 5; x < 15; x++) {
+                    if (maze[y] && maze[y][x] === 1) {
+                        ctx.fillStyle = '#1e90ff';
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize - 2, tileSize - 2);
+                    }
+                }
+            }
+
+            // Title overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(150, 250, 400, 200);
+
+            ctx.fillStyle = '#ffff00';
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('DOT MUNCHER', 350, 320);
+
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#00ffff';
+            ctx.fillText('Click START to begin!', 350, 380);
+        }
+
+        function canMove(x, y) {
+            return x >= 0 && x < mazeWidth && y >= 0 && y < mazeHeight && maze[y][x] === 0;
+        }
+
+        let frameCount = 0;
+
+        function gameLoop() {
+            if (!gameStarted || gameOver) return;
+
+            frameCount++;
+
+            // Clear screen
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 700, 700);
+
+            // Draw hover effect
+            if (hoverX > 0 && hoverY > 0) {
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.2)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(
+                    Math.floor(hoverX / tileSize) * tileSize,
+                    Math.floor(hoverY / tileSize) * tileSize,
+                    tileSize, tileSize
+                );
+            }
+
+            // Draw maze walls
+            for (let y = 0; y < mazeHeight; y++) {
+                for (let x = 0; x < mazeWidth; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillStyle = '#1e90ff';
+                        ctx.fillRect(x * tileSize + 1, y * tileSize + 1, tileSize - 2, tileSize - 2);
+
+                        // Wall texture
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                        ctx.fillRect(x * tileSize + 5, y * tileSize + 5, 10, 10);
+                    }
+                }
+            }
+
+            // Draw dots
+            for (let dot of dots) {
+                if (!dot.collected) {
+                    ctx.fillStyle = '#ffff00';
+                    ctx.beginPath();
+                    ctx.arc(
+                        dot.x * tileSize + tileSize / 2,
+                        dot.y * tileSize + tileSize / 2,
+                        4, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
+
+            // Move player every 8 frames
+            if (frameCount % 8 === 0) {
+                // Try to change direction
+                let newX = playerX;
+                let newY = playerY;
+
+                if (nextDir === 0) newX++;
+                else if (nextDir === 1) newY++;
+                else if (nextDir === 2) newX--;
+                else if (nextDir === 3) newY--;
+
+                if (canMove(newX, newY)) {
+                    playerDir = nextDir;
+                    playerX = newX;
+                    playerY = newY;
+                }
+            }
+
+            // Draw player (Pac-Man style)
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            const angle = playerDir * Math.PI / 2;
+            const mouthOpen = Math.sin(frameCount * 0.2) > 0;
+            const mouthAngle = mouthOpen ? 0.3 : 0.1;
+            ctx.arc(
+                playerX * tileSize + tileSize / 2,
+                playerY * tileSize + tileSize / 2,
+                tileSize / 2 - 4,
+                angle + mouthAngle,
+                angle + Math.PI * 2 - mouthAngle
+            );
+            ctx.lineTo(playerX * tileSize + tileSize / 2, playerY * tileSize + tileSize / 2);
+            ctx.fill();
+
+            // Collect dots
+            for (let dot of dots) {
+                if (!dot.collected && dot.x === playerX && dot.y === playerY) {
+                    dot.collected = true;
+                    score += 10;
+                    logEvent('DOT EATEN! +10 points');
+                }
+            }
+
+            // Move ghosts every 12 frames
+            if (frameCount % 12 === 0) {
+                for (let ghost of ghosts) {
+                    // Simple AI: try to move towards player
+                    let dirs = [];
+                    if (Math.random() < 0.3) {
+                        // Chase player
+                        if (ghost.x < playerX && canMove(ghost.x + 1, ghost.y)) dirs.push({ dir: 0, x: 1, y: 0 });
+                        if (ghost.x > playerX && canMove(ghost.x - 1, ghost.y)) dirs.push({ dir: 2, x: -1, y: 0 });
+                        if (ghost.y < playerY && canMove(ghost.x, ghost.y + 1)) dirs.push({ dir: 1, x: 0, y: 1 });
+                        if (ghost.y > playerY && canMove(ghost.x, ghost.y - 1)) dirs.push({ dir: 3, x: 0, y: -1 });
+                    }
+
+                    // Random movement if no chase dirs
+                    if (dirs.length === 0) {
+                        if (canMove(ghost.x + 1, ghost.y)) dirs.push({ dir: 0, x: 1, y: 0 });
+                        if (canMove(ghost.x - 1, ghost.y)) dirs.push({ dir: 2, x: -1, y: 0 });
+                        if (canMove(ghost.x, ghost.y + 1)) dirs.push({ dir: 1, x: 0, y: 1 });
+                        if (canMove(ghost.x, ghost.y - 1)) dirs.push({ dir: 3, x: 0, y: -1 });
+                    }
+
+                    if (dirs.length > 0) {
+                        const move = dirs[Math.floor(Math.random() * dirs.length)];
+                        ghost.x += move.x;
+                        ghost.y += move.y;
+                        ghost.dir = move.dir;
+                    }
+                }
+            }
+
+            // Draw ghosts
+            for (let ghost of ghosts) {
+                ctx.fillStyle = ghost.color;
+                // Ghost body
+                ctx.beginPath();
+                ctx.arc(
+                    ghost.x * tileSize + tileSize / 2,
+                    ghost.y * tileSize + tileSize / 2 - 3,
+                    tileSize / 2 - 4, Math.PI, 0
+                );
+                ctx.fillRect(
+                    ghost.x * tileSize + 5,
+                    ghost.y * tileSize + tileSize / 2 - 3,
+                    tileSize - 10,
+                    tileSize / 2 - 2
+                );
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ghost.x * tileSize + 12, ghost.y * tileSize + 14, 4, 0, Math.PI * 2);
+                ctx.arc(ghost.x * tileSize + 23, ghost.y * tileSize + 14, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(ghost.x * tileSize + 12, ghost.y * tileSize + 14, 2, 0, Math.PI * 2);
+                ctx.arc(ghost.x * tileSize + 23, ghost.y * tileSize + 14, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Check collision with player
+                if (ghost.x === playerX && ghost.y === playerY) {
+                    lives--;
+                    logEvent('GHOST CAUGHT YOU! -1 life');
+
+                    if (lives <= 0) {
+                        endGame();
+                        return;
+                    } else {
+                        // Reset position
+                        playerX = 1;
+                        playerY = 1;
+                    }
+                }
+            }
+
+            // Update UI
+            document.getElementById('score').textContent = 'SCORE: ' + String(score).padStart(5, '0');
+            document.getElementById('lives').innerHTML = 'LIVES: <span class="ghost-icon">' + '●'.repeat(lives) + '</span>';
+
+            // Check win condition
+            if (dots.every(dot => dot.collected)) {
+                level++;
+                document.getElementById('level').textContent = 'LEVEL: ' + String(level).padStart(2, '0');
+                logEvent('LEVEL COMPLETE!');
+                generateMaze();
+                playerX = 1;
+                playerY = 1;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            gameOver = true;
+            document.getElementById('status').textContent = 'GAME OVER!';
+            document.getElementById('startButton').style.display = 'inline-block';
+            logEvent('GAME OVER! Final Score: ' + score);
+
+            // Game over overlay
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+            ctx.fillRect(150, 250, 400, 200);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', 350, 350);
+        }
+    </script>
+</body>
+</html>

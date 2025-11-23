@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Cats Style Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1200px;
+            width: 95%;
+        }
+
+        .game-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 15px;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-stats {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .money {
+            color: #f1c40f;
+        }
+
+        .health {
+            color: #e74c3c;
+        }
+
+        .enemy-health {
+            color: #3498db;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #87ceeb 0%, #98d8c8 50%, #90ee90 100%);
+            border-bottom: 5px solid #8b4513;
+        }
+
+        .controls {
+            background: #34495e;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .unit-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 120px;
+        }
+
+        .unit-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .unit-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .unit-button .cost {
+            display: block;
+            font-size: 12px;
+            color: #f1c40f;
+            margin-top: 5px;
+        }
+
+        .unit-button .cooldown {
+            display: block;
+            font-size: 11px;
+            color: #ecf0f1;
+            margin-top: 3px;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .game-over h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .game-over button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .game-over button:hover {
+            transform: scale(1.05);
+        }
+
+        .stage-select {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .stage-select h2 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: #f39c12;
+        }
+
+        .stages-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stage-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stage-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .stage-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .stage-button.current {
+            border: 3px solid #f39c12;
+        }
+
+        .stage-info {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            ⚔️ BATTLE CATS DEFENSE ⚔️
+            <div style="font-size: 14px; margin-top: 5px;">
+                <span id="stageName">Stage 1: Peaceful Meadow</span>
+                <button onclick="showStageSelect()" style="margin-left: 15px; padding: 5px 15px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold;">Change Stage</button>
+            </div>
+        </div>
+        <div class="game-stats">
+            <div class="stat-item money">
+                💰 Money: <span id="money">500</span> (+<span id="income">50</span>/sec)
+            </div>
+            <div class="stat-item health">
+                ❤️ Your Base: <span id="playerHealth">1000</span>
+            </div>
+            <div class="stat-item enemy-health">
+                🏰 Enemy Base: <span id="enemyHealth">1000</span>
+            </div>
+        </div>
+        <canvas id="gameCanvas" width="1200" height="400"></canvas>
+        <div class="controls">
+            <button class="unit-button" data-unit="basic">
+                🐱 Basic Cat
+                <span class="cost">Cost: 100</span>
+                <span class="cooldown" data-cooldown="basic"></span>
+            </button>
+            <button class="unit-button" data-unit="tank">
+                🛡️ Tank Cat
+                <span class="cost">Cost: 150</span>
+                <span class="cooldown" data-cooldown="tank"></span>
+            </button>
+            <button class="unit-button" data-unit="ranged">
+                🏹 Archer Cat
+                <span class="cost">Cost: 200</span>
+                <span class="cooldown" data-cooldown="ranged"></span>
+            </button>
+            <button class="unit-button" data-unit="fast">
+                ⚡ Speed Cat
+                <span class="cost">Cost: 120</span>
+                <span class="cooldown" data-cooldown="fast"></span>
+            </button>
+            <button class="unit-button" data-unit="ninja">
+                🥷 Ninja Cat
+                <span class="cost">Cost: 180</span>
+                <span class="cooldown" data-cooldown="ninja"></span>
+            </button>
+            <button class="unit-button" data-unit="warrior">
+                ⚔️ Warrior Cat
+                <span class="cost">Cost: 250</span>
+                <span class="cooldown" data-cooldown="warrior"></span>
+            </button>
+            <button class="unit-button" data-unit="healer">
+                🔮 Magic Cat
+                <span class="cost">Cost: 300</span>
+                <span class="cooldown" data-cooldown="healer"></span>
+            </button>
+            <button class="unit-button" data-unit="assassin">
+                🗡️ Assassin Cat
+                <span class="cost">Cost: 220</span>
+                <span class="cooldown" data-cooldown="assassin"></span>
+            </button>
+            <button class="unit-button" data-unit="giant">
+                👹 Giant Cat
+                <span class="cost">Cost: 400</span>
+                <span class="cooldown" data-cooldown="giant"></span>
+            </button>
+            <button class="unit-button" data-unit="sniper">
+                🎯 Sniper Cat
+                <span class="cost">Cost: 280</span>
+                <span class="cooldown" data-cooldown="sniper"></span>
+            </button>
+        </div>
+        <div class="controls" style="padding: 10px 20px; background: #2c3e50; border-top: 2px solid #34495e;">
+            <button class="unit-button" id="workerUpgrade" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); min-width: 250px;">
+                👷 Worker Cat Upgrade
+                <span class="cost">Level <span id="workerLevel">1</span> → <span id="workerNextLevel">2</span></span>
+                <span class="cooldown" style="color: #2ecc71;">Cost: <span id="workerCost">200</span></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <h2 id="gameOverText">Victory!</h2>
+        <p id="gameOverMessage">You destroyed the enemy base!</p>
+        <button onclick="location.reload()">Play Again</button>
+        <button onclick="showStageSelect()" style="margin-left: 10px;">Select Stage</button>
+    </div>
+
+    <div class="stage-select" id="stageSelect">
+        <h2>📍 Select Stage</h2>
+        <div class="stages-grid" id="stagesGrid"></div>
+        <button onclick="hideStageSelect()" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">Close</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Stages configuration
+        const stages = {
+            1: {
+                name: 'Peaceful Meadow',
+                enemyBaseHealth: 1000,
+                spawnInterval: 3000,
+                enemyHealthMultiplier: 1.0,
+                enemyDamageMultiplier: 1.0,
+                background: '#90ee90'
+            },
+            2: {
+                name: 'Rocky Hills',
+                enemyBaseHealth: 1500,
+                spawnInterval: 2500,
+                enemyHealthMultiplier: 1.3,
+                enemyDamageMultiplier: 1.2,
+                background: '#b8956a'
+            },
+            3: {
+                name: 'Dark Forest',
+                enemyBaseHealth: 2000,
+                spawnInterval: 2000,
+                enemyHealthMultiplier: 1.6,
+                enemyDamageMultiplier: 1.4,
+                background: '#556b2f'
+            },
+            4: {
+                name: 'Snowy Mountains',
+                enemyBaseHealth: 2500,
+                spawnInterval: 1800,
+                enemyHealthMultiplier: 2.0,
+                enemyDamageMultiplier: 1.7,
+                background: '#e0f2ff'
+            },
+            5: {
+                name: 'Volcanic Wasteland',
+                enemyBaseHealth: 3000,
+                spawnInterval: 1500,
+                enemyHealthMultiplier: 2.5,
+                enemyDamageMultiplier: 2.0,
+                background: '#8b0000'
+            },
+            6: {
+                name: 'Moon Base',
+                enemyBaseHealth: 4000,
+                spawnInterval: 1200,
+                enemyHealthMultiplier: 3.0,
+                enemyDamageMultiplier: 2.5,
+                background: '#4a4a5c'
+            }
+        };
+
+        // Game state
+        const game = {
+            currentStage: 1,
+            maxUnlockedStage: 1,
+            money: 500,
+            moneyPerSecond: 50,
+            workerLevel: 1,
+            workerCost: 200,
+            playerBaseHealth: 1000,
+            enemyBaseHealth: 1000,
+            playerBaseX: 50,
+            enemyBaseX: canvas.width - 50,
+            units: [],
+            enemies: [],
+            projectiles: [],
+            lastMoneyUpdate: Date.now(),
+            lastEnemySpawn: Date.now(),
+            gameOver: false,
+            stageSelectMode: false
+        };
+
+        // Unit types
+        const unitTypes = {
+            basic: {
+                name: 'Basic Cat',
+                cost: 100,
+                health: 100,
+                maxHealth: 100,
+                speed: 1,
+                damage: 10,
+                attackSpeed: 1000,
+                range: 80,
+                color: '#ff6b6b',
+                size: 20,
+                cooldown: 2000,
+                lastSpawn: 0
+            },
+            tank: {
+                name: 'Tank Cat',
+                cost: 150,
+                health: 300,
+                maxHealth: 300,
+                speed: 0.5,
+                damage: 5,
+                attackSpeed: 1500,
+                range: 60,
+                color: '#4ecdc4',
+                size: 25,
+                cooldown: 4000,
+                lastSpawn: 0
+            },
+            ranged: {
+                name: 'Archer Cat',
+                cost: 200,
+                health: 60,
+                maxHealth: 60,
+                speed: 0.8,
+                damage: 25,
+                attackSpeed: 2000,
+                range: 200,
+                color: '#95e1d3',
+                size: 18,
+                cooldown: 5000,
+                lastSpawn: 0,
+                isRanged: true
+            },
+            fast: {
+                name: 'Speed Cat',
+                cost: 120,
+                health: 50,
+                maxHealth: 50,
+                speed: 2,
+                damage: 15,
+                attackSpeed: 800,
+                range: 70,
+                color: '#f38181',
+                size: 16,
+                cooldown: 3000,
+                lastSpawn: 0
+            },
+            ninja: {
+                name: 'Ninja Cat',
+                cost: 180,
+                health: 70,
+                maxHealth: 70,
+                speed: 1.8,
+                damage: 30,
+                attackSpeed: 1200,
+                range: 90,
+                color: '#2c3e50',
+                size: 18,
+                cooldown: 4000,
+                lastSpawn: 0
+            },
+            warrior: {
+                name: 'Warrior Cat',
+                cost: 250,
+                health: 200,
+                maxHealth: 200,
+                speed: 0.7,
+                damage: 40,
+                attackSpeed: 1800,
+                range: 75,
+                color: '#d4af37',
+                size: 22,
+                cooldown: 6000,
+                lastSpawn: 0
+            },
+            healer: {
+                name: 'Magic Cat',
+                cost: 300,
+                health: 80,
+                maxHealth: 80,
+                speed: 0.6,
+                damage: 20,
+                attackSpeed: 2500,
+                range: 180,
+                color: '#9b59b6',
+                size: 19,
+                cooldown: 7000,
+                lastSpawn: 0,
+                isRanged: true
+            },
+            assassin: {
+                name: 'Assassin Cat',
+                cost: 220,
+                health: 60,
+                maxHealth: 60,
+                speed: 2.5,
+                damage: 50,
+                attackSpeed: 2000,
+                range: 65,
+                color: '#34495e',
+                size: 17,
+                cooldown: 8000,
+                lastSpawn: 0
+            },
+            giant: {
+                name: 'Giant Cat',
+                cost: 400,
+                health: 500,
+                maxHealth: 500,
+                speed: 0.3,
+                damage: 60,
+                attackSpeed: 3000,
+                range: 100,
+                color: '#16a085',
+                size: 35,
+                cooldown: 10000,
+                lastSpawn: 0
+            },
+            sniper: {
+                name: 'Sniper Cat',
+                cost: 280,
+                health: 50,
+                maxHealth: 50,
+                speed: 0.5,
+                damage: 80,
+                attackSpeed: 3500,
+                range: 300,
+                color: '#27ae60',
+                size: 18,
+                cooldown: 9000,
+                lastSpawn: 0,
+                isRanged: true
+            }
+        };
+
+        // Enemy types
+        const enemyTypes = {
+            basic: {
+                health: 80,
+                maxHealth: 80,
+                speed: 0.8,
+                damage: 8,
+                attackSpeed: 1200,
+                range: 80,
+                color: '#e74c3c',
+                size: 20,
+                reward: 50
+            },
+            heavy: {
+                health: 200,
+                maxHealth: 200,
+                speed: 0.4,
+                damage: 15,
+                attackSpeed: 1500,
+                range: 70,
+                color: '#c0392b',
+                size: 25,
+                reward: 100
+            },
+            fast: {
+                health: 40,
+                maxHealth: 40,
+                speed: 1.5,
+                damage: 5,
+                attackSpeed: 800,
+                range: 60,
+                color: '#e67e22',
+                size: 16,
+                reward: 40
+            }
+        };
+
+        // Spawn unit
+        function spawnUnit(type) {
+            const unitData = unitTypes[type];
+            const now = Date.now();
+
+            if (game.money >= unitData.cost && now - unitData.lastSpawn >= unitData.cooldown) {
+                game.money -= unitData.cost;
+                unitData.lastSpawn = now;
+
+                game.units.push({
+                    x: game.playerBaseX + 60,
+                    y: canvas.height - 50,
+                    ...JSON.parse(JSON.stringify(unitData)),
+                    type: type,
+                    lastAttack: 0,
+                    isPlayer: true
+                });
+
+                updateUI();
+            }
+        }
+
+        // Upgrade worker
+        function upgradeWorker() {
+            if (game.money >= game.workerCost) {
+                game.money -= game.workerCost;
+                game.workerLevel++;
+                game.moneyPerSecond = 50 + (game.workerLevel - 1) * 25;
+                game.workerCost = Math.floor(200 * Math.pow(1.5, game.workerLevel - 1));
+                updateUI();
+            }
+        }
+
+        // Spawn enemy
+        function spawnEnemy() {
+            const types = Object.keys(enemyTypes);
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            const enemyData = JSON.parse(JSON.stringify(enemyTypes[randomType]));
+
+            // Apply stage multipliers
+            const stage = stages[game.currentStage];
+            enemyData.health *= stage.enemyHealthMultiplier;
+            enemyData.maxHealth *= stage.enemyHealthMultiplier;
+            enemyData.damage *= stage.enemyDamageMultiplier;
+
+            game.enemies.push({
+                x: game.enemyBaseX - 60,
+                y: canvas.height - 50,
+                ...enemyData,
+                type: randomType,
+                lastAttack: 0,
+                isPlayer: false
+            });
+        }
+
+        // Initialize stage
+        function initStage(stageNum) {
+            game.currentStage = stageNum;
+            const stage = stages[stageNum];
+
+            game.money = 500;
+            game.moneyPerSecond = 50;
+            game.workerLevel = 1;
+            game.workerCost = 200;
+            game.playerBaseHealth = 1000;
+            game.enemyBaseHealth = stage.enemyBaseHealth;
+            game.units = [];
+            game.enemies = [];
+            game.projectiles = [];
+            game.lastMoneyUpdate = Date.now();
+            game.lastEnemySpawn = Date.now();
+            game.gameOver = false;
+
+            // Reset unit cooldowns
+            Object.values(unitTypes).forEach(unit => unit.lastSpawn = 0);
+
+            document.getElementById('stageName').textContent = `Stage ${stageNum}: ${stage.name}`;
+            updateUI();
+        }
+
+        // Show stage select
+        function showStageSelect() {
+            const stageSelect = document.getElementById('stageSelect');
+            const stagesGrid = document.getElementById('stagesGrid');
+            stagesGrid.innerHTML = '';
+
+            Object.keys(stages).forEach(stageNum => {
+                const stage = stages[stageNum];
+                const button = document.createElement('button');
+                button.className = 'stage-button';
+                if (parseInt(stageNum) === game.currentStage) {
+                    button.classList.add('current');
+                }
+                button.disabled = parseInt(stageNum) > game.maxUnlockedStage;
+
+                button.innerHTML = `
+                    <div>Stage ${stageNum}</div>
+                    <div style="font-size: 14px; margin-top: 5px;">${stage.name}</div>
+                    <div class="stage-info">Base HP: ${stage.enemyBaseHealth}</div>
+                    ${parseInt(stageNum) > game.maxUnlockedStage ? '<div style="color: #e74c3c; margin-top: 5px;">🔒 Locked</div>' : ''}
+                `;
+
+                button.onclick = () => {
+                    if (parseInt(stageNum) <= game.maxUnlockedStage) {
+                        initStage(parseInt(stageNum));
+                        hideStageSelect();
+                    }
+                };
+
+                stagesGrid.appendChild(button);
+            });
+
+            stageSelect.style.display = 'block';
+        }
+
+        // Hide stage select
+        function hideStageSelect() {
+            document.getElementById('stageSelect').style.display = 'none';
+        }
+
+        // Draw base
+        function drawBase(x, isPlayer) {
+            ctx.fillStyle = isPlayer ? '#3498db' : '#e74c3c';
+            ctx.fillRect(x - 25, canvas.height - 100, 50, 100);
+            ctx.fillStyle = isPlayer ? '#2980b9' : '#c0392b';
+            ctx.fillRect(x - 35, canvas.height - 120, 70, 20);
+
+            // Draw flag
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, canvas.height - 120);
+            ctx.lineTo(x, canvas.height - 160);
+            ctx.stroke();
+
+            ctx.fillStyle = isPlayer ? '#2ecc71' : '#e67e22';
+            ctx.beginPath();
+            ctx.moveTo(x, canvas.height - 160);
+            ctx.lineTo(x + 25, canvas.height - 150);
+            ctx.lineTo(x, canvas.height - 140);
+            ctx.fill();
+        }
+
+        // Draw cat
+        function drawCat(cat) {
+            const x = cat.x;
+            const y = cat.y;
+            const size = cat.size;
+
+            // Body (oval shape)
+            ctx.fillStyle = cat.color;
+            ctx.beginPath();
+            ctx.ellipse(x, y, size * 0.9, size * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            ctx.beginPath();
+            ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ears (triangular)
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.3, y - size * 0.7);
+            ctx.lineTo(x + size * 0.5, y - size * 1.1);
+            ctx.lineTo(x + size * 0.7, y - size * 0.7);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.5, y - size * 0.7);
+            ctx.lineTo(x + size * 0.7, y - size * 1.1);
+            ctx.lineTo(x + size * 0.9, y - size * 0.7);
+            ctx.fill();
+
+            // Inner ears (pink)
+            ctx.fillStyle = '#ffb6c1';
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.4, y - size * 0.75);
+            ctx.lineTo(x + size * 0.5, y - size * 0.95);
+            ctx.lineTo(x + size * 0.6, y - size * 0.75);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.6, y - size * 0.75);
+            ctx.lineTo(x + size * 0.7, y - size * 0.95);
+            ctx.lineTo(x + size * 0.8, y - size * 0.75);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.ellipse(x + size * 0.45, y - size * 0.4, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + size * 0.75, y - size * 0.4, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pupils
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.5, y - size * 0.35, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + size * 0.7, y - size * 0.35, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose
+            ctx.fillStyle = '#ffb6c1';
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.6, y - size * 0.15);
+            ctx.lineTo(x + size * 0.55, y - size * 0.05);
+            ctx.lineTo(x + size * 0.65, y - size * 0.05);
+            ctx.fill();
+
+            // Whiskers
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            // Left whiskers
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.3, y - size * 0.2);
+            ctx.lineTo(x - size * 0.1, y - size * 0.25);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.3, y - size * 0.15);
+            ctx.lineTo(x - size * 0.1, y - size * 0.15);
+            ctx.stroke();
+            // Right whiskers
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.9, y - size * 0.2);
+            ctx.lineTo(x + size * 1.3, y - size * 0.25);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.9, y - size * 0.15);
+            ctx.lineTo(x + size * 1.3, y - size * 0.15);
+            ctx.stroke();
+
+            // Tail
+            ctx.strokeStyle = cat.color;
+            ctx.lineWidth = size * 0.3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.8, y);
+            ctx.quadraticCurveTo(x - size * 1.2, y - size * 0.8, x - size * 1.0, y - size * 1.2);
+            ctx.stroke();
+
+            // Health bar
+            const barWidth = size * 2.5;
+            const barHeight = 4;
+            const healthPercent = cat.health / cat.maxHealth;
+
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(x - barWidth/2, y - size * 1.5, barWidth, barHeight);
+
+            ctx.fillStyle = healthPercent > 0.5 ? '#2ecc71' : (healthPercent > 0.25 ? '#f39c12' : '#e74c3c');
+            ctx.fillRect(x - barWidth/2, y - size * 1.5, barWidth * healthPercent, barHeight);
+        }
+
+        // Draw dog
+        function drawDog(dog) {
+            const x = dog.x;
+            const y = dog.y;
+            const size = dog.size;
+
+            // Body (elongated oval)
+            ctx.fillStyle = dog.color;
+            ctx.beginPath();
+            ctx.ellipse(x, y, size * 1.0, size * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            ctx.beginPath();
+            ctx.ellipse(x - size * 0.8, y - size * 0.3, size * 0.6, size * 0.65, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Snout
+            ctx.fillStyle = dog.type === 'heavy' ? '#a0522d' : dog.color;
+            ctx.beginPath();
+            ctx.ellipse(x - size * 1.1, y - size * 0.1, size * 0.35, size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ears (floppy)
+            ctx.fillStyle = dog.color;
+            ctx.beginPath();
+            ctx.ellipse(x - size * 1.0, y - size * 0.8, size * 0.25, size * 0.4, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(x - size * 0.6, y - size * 0.8, size * 0.25, size * 0.4, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x - size * 0.95, y - size * 0.5, size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x - size * 0.65, y - size * 0.5, size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pupils (angry eyes)
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x - size * 0.9, y - size * 0.5, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x - size * 0.7, y - size * 0.5, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x - size * 1.1, y - size * 0.15, size * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mouth
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x - size * 1.1, y - size * 0.05);
+            ctx.lineTo(x - size * 1.25, y + size * 0.05);
+            ctx.moveTo(x - size * 1.1, y - size * 0.05);
+            ctx.lineTo(x - size * 0.95, y + size * 0.05);
+            ctx.stroke();
+
+            // Legs
+            ctx.fillStyle = dog.color;
+            ctx.fillRect(x - size * 0.5, y + size * 0.5, size * 0.25, size * 0.4);
+            ctx.fillRect(x + size * 0.2, y + size * 0.5, size * 0.25, size * 0.4);
+
+            // Tail (wagging)
+            ctx.strokeStyle = dog.color;
+            ctx.lineWidth = size * 0.3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.9, y + size * 0.1);
+            ctx.quadraticCurveTo(x + size * 1.3, y - size * 0.3, x + size * 1.2, y - size * 0.7);
+            ctx.stroke();
+
+            // Health bar
+            const barWidth = size * 2.5;
+            const barHeight = 4;
+            const healthPercent = dog.health / dog.maxHealth;
+
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(x - barWidth/2, y - size * 1.3, barWidth, barHeight);
+
+            ctx.fillStyle = healthPercent > 0.5 ? '#2ecc71' : (healthPercent > 0.25 ? '#f39c12' : '#e74c3c');
+            ctx.fillRect(x - barWidth/2, y - size * 1.3, barWidth * healthPercent, barHeight);
+        }
+
+        // Draw unit (wrapper that determines if cat or dog)
+        function drawUnit(unit) {
+            if (unit.isPlayer) {
+                drawCat(unit);
+            } else {
+                drawDog(unit);
+            }
+        }
+
+        // Draw projectile
+        function drawProjectile(proj) {
+            ctx.fillStyle = '#f39c12';
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Update game
+        function update() {
+            if (game.gameOver) return;
+
+            const now = Date.now();
+
+            // Generate money
+            if (now - game.lastMoneyUpdate >= 1000) {
+                game.money += game.moneyPerSecond;
+                game.lastMoneyUpdate = now;
+                updateUI();
+            }
+
+            // Spawn enemies
+            const stage = stages[game.currentStage];
+            if (now - game.lastEnemySpawn >= stage.spawnInterval) {
+                spawnEnemy();
+                game.lastEnemySpawn = now;
+            }
+
+            // Update units
+            game.units.forEach(unit => {
+                let target = null;
+                let minDist = Infinity;
+
+                // Find nearest enemy
+                game.enemies.forEach(enemy => {
+                    const dist = Math.abs(enemy.x - unit.x);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        target = enemy;
+                    }
+                });
+
+                // Check enemy base
+                const baseDist = Math.abs(game.enemyBaseX - unit.x);
+                if (baseDist < minDist && baseDist < unit.range + 30) {
+                    target = 'base';
+                    minDist = baseDist;
+                }
+
+                if (target && minDist <= unit.range) {
+                    // Attack
+                    if (now - unit.lastAttack >= unit.attackSpeed) {
+                        unit.lastAttack = now;
+
+                        if (unit.isRanged) {
+                            // Create projectile
+                            game.projectiles.push({
+                                x: unit.x,
+                                y: unit.y,
+                                target: target,
+                                damage: unit.damage,
+                                speed: 5
+                            });
+                        } else {
+                            // Melee attack
+                            if (target === 'base') {
+                                game.enemyBaseHealth -= unit.damage;
+                            } else {
+                                target.health -= unit.damage;
+                            }
+                        }
+                    }
+                } else {
+                    // Move forward
+                    unit.x += unit.speed;
+                }
+            });
+
+            // Update enemies
+            game.enemies.forEach(enemy => {
+                let target = null;
+                let minDist = Infinity;
+
+                // Find nearest unit
+                game.units.forEach(unit => {
+                    const dist = Math.abs(unit.x - enemy.x);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        target = unit;
+                    }
+                });
+
+                // Check player base
+                const baseDist = Math.abs(game.playerBaseX - enemy.x);
+                if (baseDist < minDist && baseDist < enemy.range + 30) {
+                    target = 'base';
+                    minDist = baseDist;
+                }
+
+                if (target && minDist <= enemy.range) {
+                    // Attack
+                    if (now - enemy.lastAttack >= enemy.attackSpeed) {
+                        enemy.lastAttack = now;
+                        if (target === 'base') {
+                            game.playerBaseHealth -= enemy.damage;
+                        } else {
+                            target.health -= enemy.damage;
+                        }
+                    }
+                } else {
+                    // Move backward
+                    enemy.x -= enemy.speed;
+                }
+            });
+
+            // Update projectiles
+            game.projectiles.forEach((proj, index) => {
+                if (proj.target === 'base') {
+                    proj.x += proj.speed;
+                    if (proj.x >= game.enemyBaseX) {
+                        game.enemyBaseHealth -= proj.damage;
+                        game.projectiles.splice(index, 1);
+                    }
+                } else if (proj.target && proj.target.health > 0) {
+                    const dx = proj.target.x - proj.x;
+                    const dy = proj.target.y - proj.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 10) {
+                        proj.target.health -= proj.damage;
+                        game.projectiles.splice(index, 1);
+                    } else {
+                        proj.x += (dx / dist) * proj.speed;
+                        proj.y += (dy / dist) * proj.speed;
+                    }
+                } else {
+                    game.projectiles.splice(index, 1);
+                }
+            });
+
+            // Remove dead units
+            game.units = game.units.filter(unit => unit.health > 0);
+            game.enemies = game.enemies.filter(enemy => {
+                if (enemy.health <= 0) {
+                    game.money += enemy.reward;
+                    return false;
+                }
+                return true;
+            });
+
+            // Check win/lose
+            if (game.enemyBaseHealth <= 0) {
+                endGame(true);
+            } else if (game.playerBaseHealth <= 0) {
+                endGame(false);
+            }
+
+            updateUI();
+        }
+
+        // Draw everything
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            const stage = stages[game.currentStage];
+
+            if (game.currentStage === 4) {
+                // Snowy sky
+                gradient.addColorStop(0, '#87ceeb');
+                gradient.addColorStop(1, '#e0f2ff');
+            } else if (game.currentStage === 5) {
+                // Volcanic sky
+                gradient.addColorStop(0, '#2c1810');
+                gradient.addColorStop(1, '#8b0000');
+            } else if (game.currentStage === 6) {
+                // Space
+                gradient.addColorStop(0, '#000000');
+                gradient.addColorStop(1, '#1a1a2e');
+            } else {
+                // Default sky
+                gradient.addColorStop(0, '#87ceeb');
+                gradient.addColorStop(1, '#98d8c8');
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw ground
+            ctx.fillStyle = stage.background;
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
+
+            // Draw bases
+            drawBase(game.playerBaseX, true);
+            drawBase(game.enemyBaseX, false);
+
+            // Draw units and enemies
+            game.units.forEach(drawUnit);
+            game.enemies.forEach(drawUnit);
+            game.projectiles.forEach(drawProjectile);
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('money').textContent = Math.floor(game.money);
+            document.getElementById('income').textContent = game.moneyPerSecond;
+            document.getElementById('playerHealth').textContent = Math.max(0, game.playerBaseHealth);
+            document.getElementById('enemyHealth').textContent = Math.max(0, game.enemyBaseHealth);
+
+            // Update worker upgrade button
+            document.getElementById('workerLevel').textContent = game.workerLevel;
+            document.getElementById('workerNextLevel').textContent = game.workerLevel + 1;
+            document.getElementById('workerCost').textContent = game.workerCost;
+            const workerButton = document.getElementById('workerUpgrade');
+            workerButton.disabled = game.money < game.workerCost;
+
+            // Update button states
+            Object.keys(unitTypes).forEach(type => {
+                const button = document.querySelector(`[data-unit="${type}"]`);
+                const unitData = unitTypes[type];
+                const now = Date.now();
+                const cooldownRemaining = Math.max(0, unitData.cooldown - (now - unitData.lastSpawn));
+
+                if (cooldownRemaining > 0) {
+                    button.disabled = true;
+                    button.querySelector(`[data-cooldown="${type}"]`).textContent =
+                        `Cooldown: ${(cooldownRemaining / 1000).toFixed(1)}s`;
+                } else if (game.money < unitData.cost) {
+                    button.disabled = true;
+                    button.querySelector(`[data-cooldown="${type}"]`).textContent = '';
+                } else {
+                    button.disabled = false;
+                    button.querySelector(`[data-cooldown="${type}"]`).textContent = 'Ready!';
+                }
+            });
+        }
+
+        // End game
+        function endGame(won) {
+            game.gameOver = true;
+            const gameOverDiv = document.getElementById('gameOver');
+            const gameOverText = document.getElementById('gameOverText');
+            const gameOverMessage = document.getElementById('gameOverMessage');
+
+            if (won) {
+                gameOverText.textContent = '🎉 VICTORY! 🎉';
+                let message = 'You destroyed the enemy base!';
+
+                // Unlock next stage
+                if (game.currentStage === game.maxUnlockedStage && game.currentStage < Object.keys(stages).length) {
+                    game.maxUnlockedStage++;
+                    message += `\n\n🔓 Stage ${game.maxUnlockedStage} unlocked!`;
+                }
+
+                gameOverMessage.textContent = message;
+            } else {
+                gameOverText.textContent = '💀 DEFEAT 💀';
+                gameOverMessage.textContent = 'Your base was destroyed...';
+            }
+
+            gameOverDiv.style.display = 'block';
+        }
+
+        // Event listeners
+        document.querySelectorAll('.unit-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const unitType = button.getAttribute('data-unit');
+                if (unitType) {
+                    spawnUnit(unitType);
+                }
+            });
+        });
+
+        // Worker upgrade button
+        document.getElementById('workerUpgrade').addEventListener('click', upgradeWorker);
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>
